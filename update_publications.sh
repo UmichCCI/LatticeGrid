@@ -1,5 +1,5 @@
 #!/bin/sh
-# UNIX shell script. written Warren Kibbe, 2009
+# UNIX shell script. written Warren Kibbe, 2009-2011
 
 #for linux box
 source /home/wakibbe/.bashrc
@@ -22,9 +22,33 @@ rake RAILS_ENV=production cache:populate taskname=abstracts > buildCache.txt
 rake RAILS_ENV=production cache:populate taskname=investigators >> buildCache.txt
 rake RAILS_ENV=production cache:populate taskname=orgs >> buildCache.txt
 rake RAILS_ENV=production cache:populate taskname=investigator_graphs >> buildCache.txt
-rake RAILS_ENV=production cache:populate taskname=org_graphs >> buildCache.txt
 rake RAILS_ENV=production cache:populate taskname=investigator_graphviz >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=investigator_awards >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=org_graphs >> buildCache.txt
 rake RAILS_ENV=production cache:populate taskname=org_graphviz >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=awards >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=mesh >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=investigator_studies >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=studies >> buildCache.txt
+rake RAILS_ENV=production cache:populate taskname=investigator_cytoscape >> buildCache.txt
+
+# in staging
+bundle exec rake RAILS_ENV=staging tmp:cache:clear 
+bundle exec rake RAILS_ENV=staging cache:clear
+bundle exec rake RAILS_ENV=staging db:vacuum
+bundle exec rake RAILS_ENV=staging cache:populate taskname=abstracts > buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=investigators >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=orgs >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=investigator_graphs >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=investigator_graphviz >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=investigator_cytoscape >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=org_graphs >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=org_graphviz >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=mesh >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=awards >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=investigator_awards >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=investigator_studies >> buildCache.txt
+bundle exec rake RAILS_ENV=staging cache:populate taskname=studies >> buildCache.txt
 
 # in development
 
@@ -34,6 +58,12 @@ rake cache:populate taskname=abstracts > buildCache.txt
 rake cache:populate taskname=investigators >> buildCache.txt
 rake cache:populate taskname=orgs >> buildCache.txt
 rake cache:populate taskname=investigator_graphs >> buildCache.txt
-rake cache:populate taskname=org_graphs >> buildCache.txt
 rake cache:populate taskname=investigator_graphviz >> buildCache.txt
+rake cache:populate taskname=investigator_awards >> buildCache.txt
+rake cache:populate taskname=org_graphs >> buildCache.txt
 rake cache:populate taskname=org_graphviz >> buildCache.txt
+rake cache:populate taskname=awards >> buildCache.txt
+rake cache:populate taskname=mesh >> buildCache.txt
+rake cache:populate taskname=investigator_studies >> buildCache.txt
+rake cache:populate taskname=studies >> buildCache.txt
+rake cache:populate taskname=investigator_cytoscape >> buildCache.txt

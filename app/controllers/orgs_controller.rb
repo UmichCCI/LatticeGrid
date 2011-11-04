@@ -2,6 +2,7 @@ class OrgsController < ApplicationController
   caches_page(:show, :index, :departments, :centers, :programs, :show_investigators, :stats, :full_show, :tag_cloud, :short_tag_cloud) if LatticeGridHelper.CachePages()
   helper :sparklines
   include ApplicationHelper
+  include OrgsHelper
 
   require 'fastercsv' # for department_collaborations
 
@@ -126,7 +127,12 @@ class OrgsController < ApplicationController
 
   def departments
     @units = Department.find(:all, :order => "sort_order, lower(abbreviation)", :include => [:members,:organization_abstracts, :primary_faculty, :joint_faculty, :secondary_faculty])
-    @heading = "Current Department Listing"
+    @heading = "Current #{LatticeGridHelper.affilation_name} Listing"
+    if LatticeGridHelper.affilation_name != "Department"
+      @show_associated_faculty = false
+      @show_members = false
+      @show_unit_type = false
+    end
     respond_to do |format|
       format.html { render :action => :index }
       format.xml  { render :xml => @units }
@@ -142,8 +148,25 @@ class OrgsController < ApplicationController
     end
   end
 
+  def classifications
+    @classifications = Program.all(:select=>"organization_classification", :group=>"organization_classification")
+    cats = @classifications.map(&:organization_classification)
+    respond_to do |format|
+      format.html { render :text=> cats.inspect }
+      format.js { render :json => {"classifications" => cats }.as_json() }
+    end
+  end
+
+  def classification_orgs
+    @units = Program.all(:select=>"name, abbreviation, division_id, id, organization_classification", :order => "sort_order, lower(abbreviation)", :conditions => ["organization_classification = :organization_classification", {:organization_classification => params[:id]}] )
+    respond_to do |format|
+      format.html { render :text=> @units.inspect }
+      format.js { render :json => {"orgs" => @units }.as_json() }
+    end
+  end
+
   def programs
-    @units = Program.find(:all, :order => "sort_order, lower(abbreviation)", :include => [:members,:organization_abstracts, :primary_faculty, :joint_faculty, :secondary_faculty])
+    @units = Program.all( :order => "sort_order, lower(abbreviation)", :include => [:members,:organization_abstracts, :primary_faculty, :joint_faculty, :secondary_faculty])
     @heading = "Center Programs Listing"
     @show_primary_faculty=false
     @show_associated_faculty=false
@@ -154,11 +177,27 @@ class OrgsController < ApplicationController
     end
   end
 
+  def program_members
+    @unit = find_unit_by_id_or_name(params[:id])
+    if @unit.blank?
+      render :text=>'could not find unit ' + params[:id]
+    else
+      investigators = @unit.associated_faculty.sort_by(&:last_name)
+      investigators_array = investigators.collect{ |inv| 
+        {"username" => inv.username, "name" => inv.full_name, "department" => inv.home_department_name, "title" => inv.title} 
+      }      
+      respond_to do |format|
+        format.html { render :text => @unit.name }
+        format.js { render :json => {"unit_name" => @unit.name, :faculty => investigators_array }.as_json() }
+      end
+    end
+  end
+
   def show_investigators
     if params[:id].nil? then
       redirect_to index_orgs_url
     else
-      @unit = OrganizationalUnit.find(params[:id])
+      @unit = find_unit_by_id_or_name(params[:id])
       @heading = "Faculty Listing for '#{@unit.name}'"
 
       respond_to do |format|
@@ -188,7 +227,7 @@ class OrgsController < ApplicationController
     elsif redirect then
       redirect_to params
     else
-      show_pre
+      @unit = find_unit_by_id_or_name(params[:id])
       @do_pagination = "1"
       @abstracts = @unit.abstract_data( params[:page] )
       @all_abstracts = @unit.get_minimal_all_data( )
@@ -209,7 +248,7 @@ class OrgsController < ApplicationController
       params.delete(:page)
       redirect_to params
     else
-      show_pre
+      @unit = find_unit_by_id_or_name(params[:id])
       @do_pagination = "0"
       @abstracts =  @unit.display_year_data( @year )
       @all_abstracts =  @unit.get_minimal_all_data( )
@@ -441,11 +480,5 @@ class OrgsController < ApplicationController
         :type => 'application/msword',
         :disposition => 'attachment') }
     end
-  end
-
-  private
-
-  def show_pre
-    @unit = OrganizationalUnit.find(params[:id])
   end
 end

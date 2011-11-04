@@ -1,3 +1,8 @@
+m# move from pprod to pprod2
+pg_dump -Fc rhlccc_latticegrid_production -U rhlccc_latticegrid -h pprod > cancer_latticegrid_prod_20120107.dmp
+pg_restore -d rhlccc_latticegrid -U latticegrid -h pprod2 cancer_latticegrid_prod_20120107.dmp
+
+
 pg_dump -Fc fsmpublications_development -U fsmpublications -h pdev > fsmpublications_dev_20110512.dmp
 pg_restore -d fsmpublications_production -U fsmpublications -h pprod fsmpublications_dev_20110512.dmp
 
@@ -5,11 +10,57 @@ pg_dump -Fc fsm_latticegrid_production -U fsm_latticegrid -h pprod > fsmpublicat
 
 pg_dump -Fc cinjcancerpublications_development -U cinjcancerpublications > cinjpublications_dev_20110410.dmp
 
+pg_dump -Fc cinj_latticegrid_staging -U rhlccc_latticegrid -h pstage > cinjpublications_dev_20110830.dmp
+
 # from my laptop
+
+pg_dump -Fc ucsf_latticegrid -U latticegrid > ucsf_latticegrid_20111110.dmp
+
+pg_dump -Fc stanford_latticegrid -U latticegrid > stanford_latticegrid_20111109.dmp
+
+pg_dump -Fc stanford_latticegrid -U latticegrid > stanford_latticegrid_20120105.dmp
+
+# since I am now running 9.1.2 and staging is running 8.4.9, I need to export as text and import using psql rather than pg_restore. That is:
+pg_dump stanford_latticegrid -U latticegrid > stanford_latticegrid_20120106.sql
+#transfer to rails-staging2
+scp stanford_latticegrid_20120106.sql wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe/
+#import
+psql -h pstage2  -f stanford_latticegrid_20120106.sql stanford_latticegrid latticegrid  
+
+pg_dump aas_latticegrid -U latticegrid > aas_latticegrid_20120116.sql
+#transfer to rails-staging2
+scp aas_latticegrid_20120116.sql wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe/
+#import
+psql -h pstage2  -f aas_latticegrid_20120116.sql aas_latticegrid latticegrid  
 
 pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20110512.dmp
 
 pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20110825.dmp
+
+pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20111210.dmp
+
+
+pg_dump -Fc umich_latticegrid_development -U latticegrid > umich_latticegrid_dev_20110825.dmp
+
+pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20110930.dmp
+
+scp  ucsf_latticegrid_20111110.dmp root@172.16.215.128:/root/ucsf_latticegrid_20111110.dmp
+
+scp  stanford_latticegrid_20111109.dmp root@172.16.215.128:/root/stanford_latticegrid_20111109.dmp
+
+scp fsmpublications_dev_20110930.dmp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/fsmpublications_dev_20110930.dmp  
+
+pg_restore -c -O -d fsm_latticegrid_production -U fsm_latticegrid -h pprod fsmpublications_dev_20110930.dmp
+
+# latest laptop version
+
+pg_restore -c -O -d stanford_latticegrid -U latticegrid stanford_latticegrid_20111109.dmp
+
+pg_restore -c -O -d fsm_latticegrid -U latticegrid fsmpublications_dev_20111210.dmp
+
+pg_restore -c -O -d rhlccc_latticegrid -U latticegrid cancer_latticegrid_prod_20111001.dmp
+
+pg_restore -c -O -d stanford_latticegrid -U latticegrid -h pstage2 stanford_latticegrid_20120105.dmp
 
 # through a ssh connection
 
@@ -35,10 +86,34 @@ scp fsmpublications_dev_20110614.dmp wakibbe@rails-prod2.nubic.northwestern.edu:
 
 scp fsmpublications_dev_20110825.dmp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe
 
-scp fsmpublications_dev_20110825.dmp wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe
+scp stanford_latticegrid_20120105.dmp wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe
+
+scp fsmpublications_dev_20111210.dmp wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe
+
+scp fsmpublications_dev_20111210.dmp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe
+
+scp fsmpublications_dev_20111210.dmp wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe
+
+
+scp umich_latticegrid_dev_20110825.dmp root@172.16.215.128:/root
+pg_restore -c -O -d umich_latticegrid_production -U latticegrid umich_latticegrid_dev_20110825.dmp
+
+
+# then push into staging/production
+pg_restore -c -O -d fsm_latticegrid_staging -U fsm_latticegrid -h pstage fsmpublications_dev_20110825.dmp
+
+pg_restore -c -O -d fsm_latticegrid_production -U fsm_latticegrid -h pprod fsmpublications_dev_20110825.dmp
+
+pg_restore -c -O -d fsm_latticegrid -U latticegrid -h pprod2 fsmpublications_dev_20111210.dmp
 
 #move to laptop from old rails-dev
 scp wakibbe@rails-dev.bioinformatics.northwestern.edu:/home/wakibbe/cinj_pubs/cinjpublications_dev_20110410.dmp  cinjpublications_dev_20110410.dmp
+
+scp wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe/cinjpublications_dev_20110830.dmp  cinjpublications_dev_20110830.dmp
+
+scp cinjpublications_dev_20110830.dmp root@172.16.215.128:/root
+pg_restore -c -O -d cinj_latticegrid_production -U latticegrid cinjpublications_dev_20110830.dmp
+
 
 
 scp wakibbe@enotis.nubic.northwestern.edu:/home/wakibbe/enotis/tmp/medical_services_2011-06-16_23-04-10.csv  medical_services_2011-06-16_23-04-10.csv
@@ -66,11 +141,19 @@ pg_restore -c -O -d fsm_latticegrid_production -U fsm_latticegrid -h localhost -
 # from rails2prod
 pg_dump -Fc rhlccc_latticegrid_production -U rhlccc_latticegrid -h pprod > cancer_latticegrid_prod_20110807.dmp
 
+pg_dump -Fc rhlccc_latticegrid_production -U rhlccc_latticegrid -h pprod > cancer_latticegrid_prod_20110930.dmp
+
+
 #move to laptop from rails-prod2
-scp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/cancer_latticegrid_prod_20110807.dmp  cancer_latticegrid_prod_20110807.dmp
+scp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/cancer_latticegrid_prod_20110930.dmp  cancer_latticegrid_prod_20110930.dmp
 #install on laptop
 pg_restore -c -O -d cancerpublications_development -U cancerpublications cancer_latticegrid_prod_20110807.dmp
 #install back on rails-prod2
 pg_restore -c -O -d rhlccc_latticegrid_production -U rhlccc_latticegrid -h pprod cancer_latticegrid_prod_20110807.dmp
 
 
+pg_dump -Fc cancerpublications_development -U cancerpublications > cancer_latticegrid_prod_20111001.dmp
+
+scp cancer_latticegrid_prod_20111001.dmp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/cancer_latticegrid_prod_20111001.dmp  
+
+pg_restore -c -O -d rhlccc_latticegrid_production -U rhlccc_latticegrid -h pprod cancer_latticegrid_prod_20111001.dmp

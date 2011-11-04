@@ -25,7 +25,7 @@ class MeshController < ApplicationController
 
   def investigator_tags
     investigator_id = params[:id]
-    handle_member_name
+    handle_member_name(false)
     investigator_id = params[:investigator_id] unless params[:investigator_id].blank?
     @taggings = Tagging.find(:all,
        :include => [:tag],
@@ -62,7 +62,7 @@ class MeshController < ApplicationController
         investigators_array = investigators.collect{ |inv| 
           tag_count = investigator_abstracts.collect{|ia| (ia.investigator_id == inv.id)?ia.abstract_id : nil }.compact.length
           max_investigator_tag_count = tag_count if (tag_count.to_i > max_investigator_tag_count.to_i)
-          {"username" => inv.username, "tag_count" => tag_count, "abstract_count" => inv.total_pubs} 
+          {"username" => inv.username, "tag_count" => tag_count, "abstract_count" => inv.total_publications} 
         }
       end
     end
@@ -95,7 +95,7 @@ class MeshController < ApplicationController
       investigator_abstracts = InvestigatorAbstract.all(:conditions => ["investigator_abstracts.abstract_id in (:abstract_ids)", {:abstract_ids=>tagged_abstracts.collect(&:taggable_id)} ])
       investigators = Investigator.find_tagged_with(tag.name)
       investigators_array = investigators.collect{ |inv| 
-        abstract_count = inv.total_pubs
+        abstract_count = inv.total_publications
         tag_count = investigator_abstracts.collect{|ia| (ia.investigator_id == inv.id)?ia.abstract_id : nil }.compact.length
         {"username" => inv.username, "tag_count" => tag_count, "abstract_count" => abstract_count} 
       }

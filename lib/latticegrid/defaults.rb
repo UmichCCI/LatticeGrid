@@ -1,5 +1,6 @@
-  # class methods
+  require 'publication_utilities' #all the helper methods
   
+  # class methods
   def LatticeGridHelper.page_title
     return 'LatticeGrid Publications'
   end
@@ -25,6 +26,10 @@
   def LatticeGridHelper.include_summary_by_member?
     return false
   end
+  
+  def LatticeGridHelper.include_research_summary_by_organization?
+    return false
+  end
 
   # for cancer centers to 'deselect' publications from inclusion in the CCSG report
   def LatticeGridHelper.show_cancer_related_checkbox?
@@ -38,6 +43,14 @@
 
    def LatticeGridHelper.menu_head_abbreviation
      "Lurie Cancer Center"
+   end
+
+   def LatticeGridHelper.logs_after
+     "10/1/2011"
+   end
+
+   def LatticeGridHelper.high_impact_issns
+     []
    end
 
    def LatticeGridHelper.GetDefaultSchool()
@@ -81,12 +94,20 @@
   end
 
   def LatticeGridHelper.email_subject
-    "Contact from the LatticeGrid Publications site at the Northwestern Robert H. Lurie Comprehensive Cancer Center"
+    "Contact from the LatticeGrid Publications site"
   end
 
   def LatticeGridHelper.home_url
     "http://www.cancer.northwestern.edu"
     "http://wiki.bioinformatics.northwestern.edu/index.php/LatticeGrid"
+  end
+
+  def LatticeGridHelper.organization_name
+    "institution"
+  end
+  
+  def latticegrid_high_impact_description
+    '<p>Researchers at our institution publish thousands of articles in peer-reviewed journals every year.  The following recommended reading showcases a selection of their recent work.</p>'
   end
 
    def LatticeGridHelper.cleanup_campus(thePI)
@@ -124,6 +145,10 @@
      false
    end
 
+   def LatticeGridHelper.include_studies?
+     false
+   end
+
    def LatticeGridHelper.allowed_ips
      # childrens: 199.125.
      # nmff: 209.107.
@@ -133,70 +158,21 @@
      [':1','127.0.0.*','165.124.*','129.105.*','199.125.*','209.107.*','165.20.*','204.26.*','69.216.*']
    end
    
-
-
- def LatticeGridHelper.setInvestigatorClass(citation,investigator, isMember=false)
+ def LatticeGridHelper.setInvestigatorClass(citation, investigator, isMember=false)
    if isMember
-     if isInvestigatorLastAuthor(citation,investigator) : "member_last_author" 
-     elsif isInvestigatorFirstAuthor(citation,investigator) : "member_first_author"
+     if IsLastAuthor(citation,investigator) : "member_last_author" 
+     elsif IsFirstAuthor(citation,investigator) : "member_first_author"
      else
        "member_author"
      end
    else
-     if isInvestigatorLastAuthor(citation,investigator) : "last_author" 
-     elsif isInvestigatorFirstAuthor(citation,investigator) : "first_author"
+     if IsLastAuthor(citation,investigator) : "last_author" 
+     elsif IsFirstAuthor(citation,investigator) : "first_author"
      else
        "author"
      end
    end
  end
-
-
-def LatticeGridHelper.getFirstAuthorIDForCitation(citation)
-  citation.investigator_abstracts.each do |investigator_abstract|
-    return investigator_abstract.investigator_id if investigator_abstract.is_first_author
-  end
-  return nil
-end
-
-def LatticeGridHelper.getFirstAuthorForCitation(citation)
-  author_id = getFirstAuthorIDForCitation(citation)
-  return nil if author_id.blank?
-  citation.investigators.each do |investigator|
-    return investigator if investigator.id == author_id
-  end
-  return nil
-end
-
-def LatticeGridHelper.getLastAuthorIDForCitation(citation)
-  citation.investigator_abstracts.each do |investigator_abstract|
-    return investigator_abstract.investigator_id if investigator_abstract.is_last_author
-  end
-  return nil
-end
-
-def LatticeGridHelper.getLastAuthorForCitation(citation)
-  author_id = getLastAuthorIDForCitation(citation)
-  return nil if author_id.blank?
-  citation.investigators.each do |investigator|
-    return investigator if investigator.id == author_id
-  end
-  return nil
-end
-
-def LatticeGridHelper.isInvestigatorFirstAuthor(citation,investigator)
-  if getFirstAuthorForCitation(citation) == investigator
-    return true
-  end
-  return false
-end
-
-def LatticeGridHelper.isInvestigatorLastAuthor(citation,investigator)
-  if getLastAuthorForCitation(citation) == investigator
-    return true
-  end
-  return false
-end
 
 # LatticeGrid prefs:
 # turn on lots of output
@@ -225,6 +201,14 @@ def LatticeGridHelper.global_pubmed_search_full_first_name?
   true
 end
 
+def LatticeGridHelper.build_institution_search_string_from_department?
+  false
+end
+
+def LatticeGridHelper.affilation_name 
+  "Department"
+end
+
 # build LatticeGridHelper.institutional_limit_search_string to identify all the publications at your institution 
 
 def LatticeGridHelper.institutional_limit_search_string 
@@ -233,7 +217,7 @@ end
 
 # these names will always be limited to the institutional search only even if LatticeGridHelper.global_limit_pubmed_search_to_institution?` is false
 def LatticeGridHelper.last_names_to_limit
-  ["Brown","Chen","Das","Khan","Li","Liu","Lu","Lee","Shen","Smith","Wang","Xia","Yang","Zhou"]
+  ["Brown","Chen","Das","Khan","Li","Liu","Lu","Lee","Shen","Smith","Tu","Wang","Xia","Yang","Zhou"]
 end
 
 # these are for messages regarding the expected number of publications
@@ -333,12 +317,12 @@ end
     end
   end
 
-def link_to_investigator(citation, investigator, name=nil, isMember=false, speed_display=false, simple_links=false) 
+def link_to_investigator(citation, investigator, name=nil, isMember=false, speed_display=false, simple_links=false, class_name=nil) 
    name=investigator.last_name if name.blank?
   link_to( name, 
    show_investigator_url(:id=>investigator.username, :page=>1), # can't use this form for usernames including non-ascii characters
-     :class => ((speed_display) ? 'author' : LatticeGridHelper.setInvestigatorClass(citation, investigator, isMember)),
-     :title => (simple_links ? "Go to #{investigator.name}: #{investigator.total_pubs} pubs" : "Go to #{investigator.name}: #{investigator.total_pubs} pubs, " + (investigator.num_intraunit_collaborators+investigator.num_extraunit_collaborators).to_s+" collaborators") )
+     :class => ((class_name.blank?) ? (speed_display) ? 'author' : LatticeGridHelper.setInvestigatorClass(citation, investigator, isMember) : class_name),
+     :title => (simple_links ? "Go to #{investigator.full_name}: #{investigator.total_publications} pubs" : "Go to #{investigator.full_name}: #{investigator.total_publications} pubs, " + (investigator.num_intraunit_collaborators+investigator.num_extraunit_collaborators).to_s+" collaborators") )
 end
 
   # investigator highlighting
@@ -371,7 +355,7 @@ end
     link_to("Edit profile", profiles_path, :title=>"Login with your NetID and NetID password to change your profile")
   end
 
-   def menu_script
+   def latticegrid_menu_script
    "<div id='side_nav_menu' class='ddsmoothmenu-v'>
    <ul>
    	<li><a href='#'>Publications by year</a>
@@ -386,6 +370,7 @@ end
    	<li><a href='#'>Graphs by program</a>
    		#{build_menu(@head_node.children.sort_by(&:abbreviation), Program) {|id| show_org_graph_path(id)} }
    	</li>
+   	<li>#{link_to( 'High Impact', high_impact_by_month_abstracts_path, :title=>'Recent high-impact publications')} </li>
    	<li>#{link_to( 'MeSH tag cloud', tag_cloud_abstracts_path, :title=>'Display MeSH tag cloud for all publications')} </li>
    	<li>#{link_to( 'Overview', programs_orgs_path, :title => 'Display an overview for all programs')}</li>
    </ul>

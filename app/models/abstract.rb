@@ -26,11 +26,11 @@ class Abstract < ActiveRecord::Base
   has_many :organization_abstracts,
         :conditions => ['organization_abstracts.end_date is null or organization_abstracts.end_date >= :now', {:now => Date.today }]
   named_scope :abstracts_last_five_years, 
-        :conditions => ['(publication_date >= :start_date or electronic_publication_date  >= :start_date)', 
+        :conditions => ['publication_date >= :start_date', 
           {:start_date => 5.years.ago }]
   named_scope :abstracts_by_date, lambda { |*dates|
       {:conditions => 
-          [' publication_date between :start_date and :end_date or electronic_publication_date between :start_date and :end_date ', 
+          [' publication_date between :start_date and :end_date ', 
             {:start_date => dates.first, :end_date => dates.last } ] }
   }
   named_scope :ccsg_abstracts_by_date, lambda { |*dates|
@@ -54,7 +54,42 @@ class Abstract < ActiveRecord::Base
     }
   default_scope :conditions => 'abstracts.is_valid = true'
 
+  def has_full
+    return false if self.full_authors.blank? 
+    return true if self.full_authors.split(/\n|\r/).first =~ /[^,]{2,}, +[^\. ]{2,}/
+    return false
+  end  
 
+  def author_array
+    if self.has_full
+      self.full_authors.split(/\n|\r/)
+    else
+      self.authors.split(/\n|\r/)
+    end
+  end
+
+  def self.full_author_not_has_full
+    with_exclusive_scope do
+      abs = all(:conditions=>"abstracts.full_authors is not null and not abstracts.full_authors = '' ")
+      ary = []
+      abs.each do |ab|
+        ary << ab unless ab.has_full 
+      end
+      ary
+    end
+  end
+  
+  def self.full_author_has_full
+    with_exclusive_scope do
+      abs = all(:conditions=>"abstracts.full_authors is not null and not abstracts.full_authors = '' ")
+      ary = []
+      abs.each do |ab|
+        ary << ab if ab.has_full 
+      end
+      ary
+    end
+  end
+    
   def self.include_deleted( id=nil )
     with_exclusive_scope do
       if id.blank?
@@ -80,6 +115,39 @@ class Abstract < ActiveRecord::Base
       end
     end
   end
+  
+  def self.abstracts_with_missing_dates()
+     with_exclusive_scope do
+       all(:conditions=>"abstracts.publication_date is null or abstracts.electronic_publication_date is null")
+     end
+  end   
+
+  def self.abstracts_with_missing_publication_date()
+    with_exclusive_scope do
+      all(:conditions=>"abstracts.publication_date is null")
+    end
+  end   
+
+  def self.abstracts_with_missing_publication_date_and_good_edate()
+    abs = abstracts_with_missing_publication_date
+    good = []
+    abs.each do |ab|
+      good << ab if ab.year.to_s == ab.electronic_publication_date.year.to_s
+    end
+    good
+  end   
+
+  def self.abstracts_with_missing_electronic_publication_date()
+    with_exclusive_scope do
+      all(:conditions=>"abstracts.electronic_publication_date is null ")
+    end
+  end   
+
+  def self.abstracts_with_missing_deposited_date()
+    with_exclusive_scope do
+      all(:conditions=>"abstracts.deposited_date is null ")
+    end
+  end   
 
   def self.only_invalid( )
     with_exclusive_scope do
@@ -89,7 +157,13 @@ class Abstract < ActiveRecord::Base
 
   def self.find_by_pubmed_include_deleted( val )
     with_exclusive_scope do
-        find_by_pubmed(val)
+        find_by_pubmed(val.to_s)
+    end
+  end
+
+  def self.find_all_by_pubmed_include_deleted( val )
+    with_exclusive_scope do
+        find_all_by_pubmed(val)
     end
   end
 
@@ -99,6 +173,11 @@ class Abstract < ActiveRecord::Base
         :joins => :investigator_abstracts,
         :conditions => ["investigator_abstracts.investigator_id = :investigator_id", {:investigator_id => investigator_id}])
     end
+  end
+
+  def self.recents_by_issns(issns)
+    all(:conditions => ['abstracts.issn IN (:issns) and abstracts.publication_date >= :recent_date',{:issns => issns, :recent_date => 30.months.ago}],
+          :order => "abstracts.publication_date DESC, authors ASC" )
   end
 
   def self.from_journal_include_deleted(journal_abbreviation)
@@ -161,9 +240,45 @@ class Abstract < ActiveRecord::Base
     all(  :conditions => ["not exists(select 'x' from investigator_abstracts where investigator_abstracts.abstract_id = abstracts.id and investigator_abstracts.is_valid = true )"] )
   end
 
-  def self.deleted_with_investigators()
+  def self.invalid_with_investigators()
     with_exclusive_scope do
       all(  :conditions => ["abstracts.is_valid = false and exists(select 'x' from investigator_abstracts where investigator_abstracts.abstract_id = abstracts.id and investigator_abstracts.is_valid = true )"] )
+    end
+  end
+
+  def self.invalid_with_investigators_unreviewed()
+    with_exclusive_scope do
+      all(  :conditions => ["abstracts.is_valid = false and abstracts.last_reviewed_id is null and exists(select 'x' from investigator_abstracts where investigator_abstracts.abstract_id = abstracts.id and investigator_abstracts.is_valid = true )"] )
+    end
+  end
+
+  def self.invalid_with_investigators_reviewed()
+    with_exclusive_scope do
+      all(  :conditions => ["abstracts.is_valid = false and abstracts.last_reviewed_id is not null and exists(select 'x' from investigator_abstracts where investigator_abstracts.abstract_id = abstracts.id and investigator_abstracts.is_valid = true )"] )
+    end
+  end
+
+  def self.invalid_unreviewed()
+    with_exclusive_scope do
+      all(  :conditions => ["abstracts.is_valid = false and abstracts.last_reviewed_id is null "] )
+    end
+  end
+
+  def self.invalid_reviewed()
+    with_exclusive_scope do
+      all(  :conditions => ["abstracts.is_valid = false and abstracts.last_reviewed_id is not null "] )
+    end
+  end
+
+  def self.valid_unreviewed()
+    with_exclusive_scope do
+      all(  :conditions => ["abstracts.is_valid = true and abstracts.last_reviewed_id is null "] )
+    end
+  end
+
+  def self.valid_reviewed()
+    with_exclusive_scope do
+      all(  :conditions => ["abstracts.is_valid = true and abstracts.last_reviewed_id is not null "] )
     end
   end
 
@@ -208,13 +323,13 @@ class Abstract < ActiveRecord::Base
   def self.investigator_publications( investigators, number_years=5)
     cutoff_date=number_years.years.ago
     all(:joins => [:investigators, :investigator_abstracts],
-  		  :conditions => ['(publication_date >= :start_date or electronic_publication_date  >= :start_date) and investigator_abstracts.investigator_id IN (:investigators) and investigator_abstracts.is_valid = true', 
+  		  :conditions => ['publication_date >= :start_date and investigator_abstracts.investigator_id IN (:investigators) and investigator_abstracts.is_valid = true', 
    		      {:start_date => cutoff_date, :investigators => investigators }])
   end
   
   def self.investigator_publications_by_date( investigators, pub_start_date, pub_end_date )
        all(:joins => [:investigators, :investigator_abstracts],
-   		  :conditions => ['(abstracts.publication_date between :pub_start_date and :pub_end_date or abstracts.electronic_publication_date between :pub_start_date and :pub_end_date ) and investigator_abstracts.investigator_id IN (:investigators) and investigator_abstracts.is_valid = true', 
+   		  :conditions => ['(abstracts.publication_date between :pub_start_date and :pub_end_date) and investigator_abstracts.investigator_id IN (:investigators) and investigator_abstracts.is_valid = true', 
     		      {:pub_start_date => pub_start_date, :pub_end_date => pub_end_date, :investigators => investigators }]).uniq
   end
    

@@ -6,11 +6,12 @@
 <% 
   require 'config/initializers/latticegrid'
   the_database = case LatticeGrid.the_instance
-    when 'RHLCCC' then "cancer_latticegrid"
+    when 'RHLCCC' then "rhlccc_latticegrid"
     when 'Feinberg' then "fsm_latticegrid"
     when 'UCSF' then "ucsf_latticegrid"
     when 'UWCCC' then "uwisc_latticegrid"
     when 'UMich' then "umich_latticegrid"
+    when 'Stanford' then "stanford_latticegrid"
     when 'CINJ' then "cinj_latticegrid"
     when 'UChicago' then "uchicago_latticegrid"
     when 'UIC' then "uic_latticegrid"
@@ -18,6 +19,8 @@
     else "latticegrid"
   end
 %>
+
+# bcdatabase looks in /etc/nubic/db for a file called local_postgresql.yml in development, pstage.yml for staging, pprod.yml for production
 
 <%= bcdb.development :local_postgresql, the_database %>
 <%= bcdb.test :local_postgresql, :latticegrid_test %>

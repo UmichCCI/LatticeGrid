@@ -15,6 +15,11 @@ task :purgeUnupdatedOrganizations => :getAllOrganizationsNotUpdated do
   }
 end
 
+task :importRoot => :environment do
+  read_file_handler("importRoot" ) {|filename| ReadRootOrgData(filename)}
+end
+
+
 task :importDepartments => :environment do
   read_file_handler("importDepartments" ) {|filename| ReadSchoolDepartmentData(filename)}
 end
@@ -59,25 +64,6 @@ task :buildProgramsFromInvestigators => [:getInvestigators,:getPrimaryAppointmen
     InsertInvestigatorProgramsFromDepartments(@AllInvestigators)
     puts "number of investigatorPrograms = #{InvestigatorProgram.find(:all).length}"
   }
-end
-
-task :cleanInvestigatorsUsername => :environment do
-   block_timing("cleanInvestigatorsUsername") {
-     doCleanInvestigators(Investigator.find(:all, :conditions => "username like '%.%'"))
-     doCleanInvestigators(Investigator.find(:all, :conditions => "username like '%(%'"))
-   }
-end
-
-task :purgeOldMemberships => :environment do
-   block_timing("purgeOldMemberships") {
-      prune_program_memberships_not_updated()
-   }
-end
-
-task :purgeNonMembers => :getAllInvestigatorsWithoutMembership do
-   block_timing("purgeNonMembers") {
-     purgeInvestigators(@InvestigatorsWithoutMembership)
-   }
 end
 
 task :validateUsers => :environment do

@@ -25,6 +25,13 @@ module Bio
     end
     alias electronic_publication_date edat
 
+    # CRDT   - Creation Date
+    #   The date the article was first published in pubmed.
+    def crdt
+     @pubmed['CRDT'].strip  # in the form 2005/06/10
+    end
+    alias creation_date crdt
+
     # STAT   - status
     #   Current status of the record
     def stat
@@ -34,20 +41,11 @@ module Bio
 
     # DP   - Publication Date
     #   The date the article was published. Year MON day
-    #def publication_date
-     #pubdate=@pubmed['DP'].strip.split(" ")
-     #if pubdate.length > 2
-      # pubdate[2].to_s + '-' + pubdate[1].to_s + '-' + pubdate[0].to_s
-     #elsif pubdate.length == 2
-      # '01-'+ pubdate[1]+'-'+ pubdate[0]
-     #elsif pubdate.length == 1
-      # '01-JAN-'+ pubdate[0]
-     #else
-     #  nil
-     #end
-    #end
-def publication_date
-    return nil if @pubmed['DP'].blank?
+    # tough case:  "2007 Dec-2008 Jan"
+    # another case "2005 Apr 16-22"
+  def publication_date
+    the_date = nil
+    return the_date if @pubmed['DP'].blank?
     if @pubmed['DP'].strip =~ /([0-9][0-9][0-9][0-9] [a-zA-Z]+)-([0-9][0-9][0-9][0-9] [a-zA-Z]+)/i
       @pubmed['DP'] =  @pubmed['DP'].strip.split("-")[1]
     end
@@ -77,16 +75,18 @@ def publication_date
       if day_range.length > 1
         pubdate[2] = day_range[1]
       end
-      pubdate[2].to_s + '-' + pubdate[1].to_s + '-' + pubdate[0].to_s
+      the_date = pubdate[2].to_s + '-' + pubdate[1].to_s + '-' + pubdate[0].to_s
     elsif pubdate.length == 2
-      '01-'+ pubdate[1]+'-'+ pubdate[0]
+      the_date = '01-'+ pubdate[1]+'-'+ pubdate[0]
     elsif pubdate.length == 1
-      '01-JAN-'+ pubdate[0]
-    else
-      nil
+      the_date = '01-JAN-'+ pubdate[0]
     end
+    return the_date
   end
 
+    def dp
+     @pubmed['DP'].strip
+    end
 
     # PST   - Publication Status
     #   The date the article was published.

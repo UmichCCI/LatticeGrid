@@ -1,7 +1,7 @@
 class AbstractsController < ApplicationController
 #removed :full_tagged_abstracts and :tagged_abstracts - too many cached pages
 
-  caches_page( :year_list, :full_year_list, :current, :tag_cloud, :endnote, :tagged_abstracts, :full_tagged_abstracts, :tag_cloud_by_year, :endnote, :show)  if LatticeGridHelper.CachePages()
+  caches_page( :year_list, :full_year_list, :current, :tag_cloud, :endnote, :tagged_abstracts, :full_tagged_abstracts, :tag_cloud_by_year, :endnote, :show, :high_impact, :high_impact_by_month)  if LatticeGridHelper.CachePages()
   
   include AbstractsHelper
   include ApplicationHelper
@@ -157,8 +157,33 @@ class AbstractsController < ApplicationController
   end
 
   def high_impact
-    @high_impact = Journal.high_impact()
-    render :layout => 'printable'
+    @high_impact = Journal.preferred_high_impact()
+    @high_impact = Journal.high_impact() if @high_impact.blank?
+    respond_to do |format|
+      format.html {render :layout => 'printable'}
+      format.pdf do
+        @pdf = 1
+        render( :pdf => "High Impact journals", 
+            :stylesheets => "pdf", 
+            :template => "abstracts/high_impact.html",
+            :layout => "pdf")
+      end
+    end
+  end
+
+  def high_impact_by_month
+    @high_impact_issns = Journal.preferred_high_impact_issns()
+    @high_impact_issns = Journal.high_impact_issns() if @high_impact_issns.blank?
+    @abstracts = Abstract.recents_by_issns(@high_impact_issns.map(&:issn))
+    respond_to do |format|
+      format.html {render :layout => 'high_impact'}
+      format.pdf do
+        render( :pdf => "Recent high impact by month", 
+            :stylesheets => "high_impact", 
+            :template => "abstracts/high_impact_by_month.html",
+            :layout => "high_impact")
+      end
+    end
   end
 
   def search 
@@ -236,7 +261,9 @@ class AbstractsController < ApplicationController
   
   def add_pubmed_ids
     #should be an ajax call
-    @abstracts=Abstract.find(:all, :conditions => ["pubmed in (:pubmed_ids)", {:pubmed_ids=>params[:pubmed_ids].split}])
+    @pubmed_ids = params[:pubmed_ids]
+    @pubmed_ids = @pubmed_ids.gsub(/\, ?/,' ').split unless @pubmed_ids.blank?
+    @abstracts=Abstract.find(:all, :conditions => ["pubmed in (:pubmed_ids)", {:pubmed_ids=>@pubmed_ids}])
   end
   
   #called as xhr
@@ -259,7 +286,8 @@ class AbstractsController < ApplicationController
         #sped this up by only processing the intersection
         if !(new_ids == [] ) then
           new_ids.each do |investigator_id|
-            InsertInvestigatorPublication(abstract.id, investigator.id, IsFirstAuthor(abstract,investigator), IsLastAuthor(abstract,investigator), true)
+            investigator = Investigator.find_by_id(investigator_id)
+            InsertInvestigatorPublication(abstract.id, investigator.id, (abstract.publication_date||abstract.electronic_publication_date||abstract.deposited_date), IsFirstAuthor(abstract,investigator), IsLastAuthor(abstract,investigator), true) unless investigator.blank? or investigator.id.blank?
           end
           abstract.reload()
         end

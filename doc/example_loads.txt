@@ -1,3 +1,197 @@
+# AASurg January 2012 updates
+
+rake db:vacuum 
+rake log:clear
+rake importRoot file=db/imports/AAS/root_lookup.txt 
+rake importOrganizations file=db/imports/AAS/institution_lookup.txt 
+rake cleanUpOrganizations
+rake log:clear
+rake importInvestigators file=db/imports/AAS/aas_faculty.txt 
+rake cleanup:countFacultyUpdates
+rake cleanup:email
+rake cleanup:cleanInvestigatorsUsername
+rake importInvestigatorPubmedIDs file=db/imports/Feinberg/pubmed_ids_Dec2011.txt 
+
+rake importJournalImpact file=db/imports/jcr_recs.txt
+rake importJournalImpact file=db/imports/jcr_recs_2010.txt
+rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
+rake updateJournalISSNsFromPubmed
+rake cleanJournalISSNentries
+rake findAbstractswithoutJCRentries
+rake findAbstractswithJCRentries
+rake updateJournalISSNsFromPubmed
+rake setPreferredHighImpact
+
+rake insertAllAbstracts 
+rake nightlyBuild # repeat a few times a week
+rake cleanup:find_duplicate_tags
+rake cleanup:resolve_duplicate_tags
+rake cleanup:resolve_misformed_tags
+rake monthlyBuild # repeat weekly or monthly - updates the mesh stats
+
+# Stanford January 2012 updates
+
+rake db:vacuum 
+rake log:clear
+rake cleanup:find_duplicate_tags
+rake cleanup:resolve_duplicate_tags
+rake cleanup:resolve_misformed_tags
+rake nightlyBuild
+rake monthlyBuild
+
+
+# Feinberg December 2011 loads
+
+rake importDepartments file=db/imports/Feinberg/department_lookup_Dec2010.txt 
+rake importOrganizations file=db/imports/Feinberg/division_lookup_Sep2011.txt 
+rake cleanUpOrganizations
+rake log:clear
+rake importInvestigators file=db/imports/Feinberg/faculty_Dec2011.txt 
+rake cleanup:countFacultyUpdates
+rake cleanup:purgeUnupdatedFaculty
+rake importJointAppointments file=db/imports/Feinberg/joint_appointments_Sep2011.txt
+rake importSecondaryAppointments file=db/imports/Feinberg/secondary_appointments_Dec2011.txt 
+rake importCenterMemberships file=db/imports/Feinberg/center_memberships_Dec2011.txt 
+rake importInvestigatorPubmedIDs file=db/imports/Feinberg/pubmed_ids_Dec2011.txt 
+rake importInvestigatorDescriptions file=db/imports/Feinberg/faculty_interests_Dec2011.txt
+rake importInvestigatorDescriptions file=db/imports/Feinberg/faculty_descriptions_Dec2011.txt
+rake db:vacuum  #added a custom rake method for this
+rake cleanup:email
+rake cleanup:cleanInvestigatorsUsername
+
+rake importJournalImpact file=db/imports/jcr_recs.txt
+rake importJournalImpact file=db/imports/jcr_recs_2010.txt
+rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
+rake updateJournalISSNsFromPubmed
+rake cleanJournalISSNentries
+rake findAbstractswithoutJCRentries
+rake findAbstractswithJCRentries
+rake updateJournalISSNsFromPubmed
+rake setPreferredHighImpact
+
+rake awards:importData file=db/imports/Feinberg/private/award_data_20111206.txt
+rake awards:cleanPIassignments
+
+rake importStudies file=db/imports/Feinberg/private/studies_2011-12-06.csv
+rake importStudyInvestigators file=db/imports/Feinberg/private/study_roles_2011-12-06.csv
+rake findStudiesWithoutInvestigators
+
+rake checkValidAbstractsWithoutInvestigators
+rake removeValidAbstractsWithoutInvestigators
+
+rake nightlyBuild
+rake cleanup:findServiceInvestigatorsWithoutActivities
+rake cleanup:purgeServiceInvestigatorsWithoutActivities
+rake cleanup:resolve_duplicate_tags
+rake cleanup:resolve_misformed_tags
+rake monthlyBuild
+
+rake db:vacuum  #added a custom rake method for this
+rake log:clear
+
+
+# UCSF November 2011 loads
+rake db:drop
+rake db:create
+rake db:migrate
+rake importDepartments file=db/imports/UCSF/department_lookup.txt
+rake importOrganizations file=db/imports/UCSF/division_lookup_aug_2011.txt 
+rake cleanUpOrganizations
+rake getAllOrganizationsNotUpdated
+rake importInvestigators file=db/imports/UCSF/faculty_02_2011.txt
+rake importInvestigators file=db/imports/UCSF/membership_20110804.txt
+rake getAllInvestigatorsWithoutMembership  
+rake cleanup:purgeNonMembers
+rake importJournalImpact file=db/imports/jcr_recs_2009.txt
+rake importJournalImpact file=db/imports/jcr_recs_2010.txt
+rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
+rake cleanJournalISSNentries
+rake insertAllAbstracts 
+rake nightlyBuild # repeat a few times a week
+rake monthlyBuild # repeat weekly or monthly - updates the mesh stats
+
+
+#Stanford November 2011 loads
+rake importDepartments file=db/imports/Stanford/department_lookup.txt
+rake importOrganizations file=db/imports/Stanford/division_lookup.txt 
+rake cleanUpOrganizations
+rake getAllOrganizationsNotUpdated
+rake purgeUnupdatedOrganizations
+rake getAllOrganizationsNotUpdated
+rake importJournalImpact file=db/imports/jcr_recs_2009.txt
+rake importJournalImpact file=db/imports/jcr_recs_2010.txt
+rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
+rake cleanJournalISSNentries
+
+
+rake importInvestigators file=db/imports/Stanford/stanford_membership_101911.txt
+rake log:clear
+rake getAllMembers  
+rake checkForInvestigatorsWithNoPrograms
+rake db:vacuum  #added a custom rake method for this
+rake cleanup:email
+rake cleanup:cleanInvestigatorsUsername
+
+# November 2011 loads, RHLCCC
+rake importInvestigators file=db/imports/RHLCCC/new_faculty_Oct2011.txt
+rake importProgramMembership  file=db/imports/RHLCCC/RHLCCCProgramMembershipsOct2011.txt
+rake getAllMembers  
+rake checkForInvestigatorsWithNoPrograms
+rake deleteInvestigatorsWithNoPrograms
+rake importInvestigatorDescriptions file=db/imports/RHLCCC/example_summaries_nov2011.txt
+
+
+# October 2011 loads, RHLCCC
+rake importInvestigators file=db/imports/RHLCCC/new_faculty_Sep2011.txt
+rake importProgramMembership  file=db/imports/RHLCCC/RHLCCCProgramMembershipsSep2011.txt
+rake getAllMembers  
+rake checkForInvestigatorsWithNoPrograms
+rake deleteInvestigatorsWithNoPrograms
+
+
+# September 2011 loads
+rake importDepartments file=db/imports/Feinberg/department_lookup_Dec2010.txt 
+rake importOrganizations file=db/imports/Feinberg/division_lookup_Sep2011.txt 
+rake cleanUpOrganizations
+rake log:clear
+rake importInvestigators file=db/imports/Feinberg/faculty_Sep2011.txt 
+rake importInvestigators file=db/imports/Feinberg/faculty_Aug2011b.txt 
+rake cleanup:countFacultyUpdates
+rake cleanup:purgeUnupdatedFaculty
+rake importJointAppointments file=db/imports/Feinberg/joint_appointments_Sep2011.txt
+rake importSecondaryAppointments file=db/imports/Feinberg/secondary_appointments_Sep2011.txt 
+rake importCenterMemberships file=db/imports/Feinberg/center_memberships_Sep2011.txt 
+rake importInvestigatorPubmedIDs file=db/imports/Feinberg/pubmed_ids_Sep2011.txt 
+rake importInvestigatorDescriptions file=db/imports/Feinberg/faculty_interests_Sep2011.txt
+rake importInvestigatorDescriptions file=db/imports/Feinberg/faculty_descriptions_Sep2011.txt
+rake db:vacuum  #added a custom rake method for this
+rake cleanup:email
+rake cleanup:cleanInvestigatorsUsername
+
+rake importJournalImpact file=db/imports/jcr_recs.txt
+rake importJournalImpact file=db/imports/jcr_recs_2010.txt
+rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
+rake updateJournalISSNsFromPubmed
+rake cleanJournalISSNentries
+rake findAbstractswithoutJCRentries
+rake findAbstractswithJCRentries
+rake updateJournalISSNsFromPubmed
+rake setPreferredHighImpact
+
+rake awards:importData file=db/imports/Feinberg/private/award_data_20110927xl.txt
+rake awards:cleanPIassignments
+
+rake importStudies file=db/imports/Feinberg/private/studies_2011_09_08.csv
+rake importStudyInvestigators file=db/imports/Feinberg/private/study_roles_2011-09-08.csv
+rake findStudiesWithoutInvestigators
+
+rake checkValidAbstractsWithoutInvestigators
+rake removeValidAbstractsWithoutInvestigators
+
+rake db:vacuum  #added a custom rake method for this
+rake log:clear
+
+
 # August 2011 loads
 rake importDepartments file=db/imports/Feinberg/department_lookup_Dec2010.txt 
 rake importOrganizations file=db/imports/Feinberg/division_lookup_Aug2011.txt 
@@ -19,7 +213,7 @@ rake cleanJournalISSNentries
 rake findAbstractswithoutJCRentries
 rake findAbstractswithJCRentries
 
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake importInvestigatorDescriptions file=db/imports/Feinberg/faculty_interests_Aug2011.txt
 rake importInvestigatorDescriptions file=db/imports/Feinberg/faculty_descriptions_Aug2011.txt
 rake db:vacuum  #added a custom rake method for this
@@ -47,7 +241,7 @@ rake cleanJournalISSNentries
 rake findAbstractswithoutJCRentries
 rake findAbstractswithJCRentries
 
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake importInvestigatorDescriptions file=db/imports/faculty_interests_June2011.txt
 rake importInvestigatorDescriptions file=db/imports/faculty_descriptions_June2011.txt
 rake db:vacuum  #added a custom rake method for this
@@ -76,7 +270,7 @@ rake cleanJournalISSNentries
 rake findAbstractswithoutJCRentries
 rake findAbstractswithJCRentries
 
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake importInvestigatorDescriptions file=db/imports/faculty_interests_Apr2011.txt
 rake importInvestigatorDescriptions file=db/imports/faculty_descriptions_Apr2011.txt
 rake db:vacuum  #added a custom rake method for this
@@ -105,7 +299,7 @@ rake RAILS_ENV=staging  cleanJournalISSNentries
 rake RAILS_ENV=staging  findAbstractswithoutJCRentries
 rake RAILS_ENV=staging  findAbstractswithJCRentries
 
-rake RAILS_ENV=staging  cleanInvestigatorsUsername
+rake RAILS_ENV=staging  cleanup:cleanInvestigatorsUsername
 rake RAILS_ENV=staging  importInvestigatorDescriptions file=db/imports/faculty_interests_Apr2011.txt
 rake RAILS_ENV=staging  importInvestigatorDescriptions file=db/imports/faculty_descriptions_Apr2011.txt
 rake RAILS_ENV=staging  db:vacuum  #added a custom rake method for this
@@ -135,7 +329,7 @@ rake RAILS_ENV=production  cleanJournalISSNentries
 rake RAILS_ENV=production  findAbstractswithoutJCRentries
 rake RAILS_ENV=production  findAbstractswithJCRentries
 
-rake RAILS_ENV=production  cleanInvestigatorsUsername
+rake RAILS_ENV=production  cleanup:cleanInvestigatorsUsername
 rake RAILS_ENV=production  importInvestigatorDescriptions file=db/imports/faculty_interests_Apr2011.txt
 rake RAILS_ENV=production  importInvestigatorDescriptions file=db/imports/faculty_descriptions_Apr2011.txt
 rake RAILS_ENV=production  db:vacuum  #added a custom rake method for this
@@ -160,7 +354,7 @@ rake importAwardData file=db/imports/Cognos_Awards.txt
 rake importAwardData file=db/imports/award_data_20110417.txt
 rake importJournalImpact file=db/imports/jcr_recs.txt
 rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake importInvestigatorDescriptions file=db/imports/faculty_interests_Feb2011.txt
 rake importInvestigatorDescriptions file=db/imports/faculty_descriptions_Feb2011.txt
 rake db:vacuum  #added a custom rake method for this
@@ -180,7 +374,7 @@ rake importInvestigatorPubmedIDs file=db/imports/pubmed_ids_Dec2010.txt
 rake importAwardData file=db/imports/Cognos_Awards.txt
 rake importJournalImpact file=db/imports/jcr_recs.txt
 rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake importInvestigatorDescriptions file=db/imports/faculty_descriptions_Dec2010.txt
 rake importInvestigatorDescriptions file=db/imports/faculty_interests_Dec2010.txt
 rake db:vacuum  #added a custom rake method for this
@@ -199,7 +393,7 @@ rake importInvestigatorPubmedIDs file=db/imports/pubmed_ids_October2010.txt
 rake importAwardData file=db/imports/Cognos_Awards.txt
 rake importJournalImpact file=db/imports/jcr_recs.txt
 rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake importInvestigatorDescriptions file=db/imports/faculty_descriptions_October2010.txt
 rake importInvestigatorDescriptions file=db/imports/faculty_interests_October2010.txt
 rake db:vacuum  #added a custom rake method for this
@@ -221,7 +415,7 @@ rake environment RAILS_ENV=production  importInvestigatorPubmedIDs file=db/impor
 rake environment RAILS_ENV=production  importAwardData file=db/imports/Cognos_Awards.txt
 rake environment RAILS_ENV=production  importJournalImpact file=db/imports/jcr_recs.txt
 rake environment RAILS_ENV=production  importJournalISOnames file=db/imports/jcr_iso_titles.txt
-rake environment RAILS_ENV=production  cleanInvestigatorsUsername
+rake environment RAILS_ENV=production  cleanup:cleanInvestigatorsUsername
 rake environment RAILS_ENV=production importInvestigatorDescriptions file=db/imports/faculty_descriptions_October2010.txt
 rake environment RAILS_ENV=production importInvestigatorDescriptions file=db/imports/faculty_interests_October2010.txt
 rake environment RAILS_ENV=production  db:vacuum  #added a custom rake method for this
@@ -245,7 +439,7 @@ rake importInvestigatorPubmedIDs file=db/imports/pubmed_ids_June2010.txt
 rake importAwardData file=db/imports/Cognos_Awards.txt
 rake importJournalImpact file=db/imports/jcr_recs.txt
 rake importJournalISOnames file=db/imports/jcr_iso_titles.txt
-rake cleanInvestigatorsUsername
+rake cleanup:cleanInvestigatorsUsername
 rake log:clear
 
 rake environment RAILS_ENV=production  db:drop
@@ -263,7 +457,7 @@ rake environment RAILS_ENV=production  importInvestigatorPubmedIDs file=db/impor
 rake environment RAILS_ENV=production  importAwardData file=db/imports/Cognos_Awards.txt
 rake environment RAILS_ENV=production  importJournalImpact file=db/imports/jcr_recs.txt
 rake environment RAILS_ENV=production  importJournalISOnames file=db/imports/jcr_iso_titles.txt
-rake environment RAILS_ENV=production  cleanInvestigatorsUsername
+rake environment RAILS_ENV=production  cleanup:cleanInvestigatorsUsername
 rake log:clear
 
 # for the irb

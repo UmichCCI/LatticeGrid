@@ -1,6 +1,69 @@
 require 'graphviz'
 require 'stringio'
 
+def graph_output( g, path, file_name, output_format )
+  output_format = 'svg' if output_format == 'xml'
+  file_name = clean_filename(file_name)
+#  logger.info "graph_output( #{g}, #{path}, #{file_name}, #{output_format} )"
+  graph_output_format = path+file_name+"."+output_format
+  check_path(path)
+  begin
+    Dir.entries(path)
+    g.output( output_format => graph_output_format )
+  rescue Exception => error
+    logger.error("graph_output error: #{error.message}")
+    logger.error("path is #{path}; filename is #{file_name}, outputformat is #{output_format}.")
+    puts "unable to link to directory #{path} or write out file"
+  end
+
+end
+
+def clean_filename(filename)
+  filename.downcase.gsub(/[^a-z0-9]+/,'_')
+end
+
+def check_path(path)
+  begin
+    Dir.entries(path)
+  rescue
+    dir=""
+    begin
+      path.split("/").each do |dir_name|
+        dir += dir_name+"/"
+        add_path(dir)
+      end
+    rescue Exception => error
+      logger.error("check_path error: #{error.message}")
+      puts "unable to create directory #{path}. Made it to #{dir}"
+    end
+  end
+end
+
+def add_path(path)
+  begin
+    Dir.entries(path)
+  rescue
+    Dir.mkdir(path)
+  end
+end
+
+def graph_exists?( path, file_name, output_format )
+  complete_name = path+file_name+"."+output_format
+  return File.exist?( complete_name )
+end
+
+def graph_no_data (g, message)
+  main        = g.add_node( "main", 
+                    :label=> message, 
+                    :URL => abstracts_url(), 
+                    :target=>'_top', 
+                    :shape => 'box',
+                    :color => LatticeGridHelper.white_fill_color,
+                    :fillcolor => LatticeGridHelper.white_fill_color,
+                    :tooltip => 'Data is unavailable - user or unit cannot be found')
+  return g
+end
+
 # gold: #FFAD33
 # existing gold (browner): #e8a820
 # pale gold: #ddaa66
@@ -74,79 +137,17 @@ def graph_new(program, gopts={}, nopts={}, eopts={})
   return g
 end
 
-def graph_output( g, path, file_name, output_format )
-  output_format = 'svg' if output_format == 'xml'
-  file_name = clean_filename(file_name)
-#  logger.info "graph_output( #{g}, #{path}, #{file_name}, #{output_format} )"
-  graph_output_format = path+file_name+"."+output_format
-  check_path(path)
-  begin
-    Dir.entries(path)
-    g.output( output_format => graph_output_format )
-  rescue Exception => error
-    logger.error("graph_output error: #{error.message}")
-    logger.error("path is #{path}; filename is #{file_name}, outputformat is #{output_format}.")
-    puts "unable to link to directory #{path} or write out file"
-  end
 
-end
-
-def clean_filename(filename)
-  filename.downcase.gsub(/[^a-z0-9]+/,'_')
-end
-
-def check_path(path)
-  begin
-    Dir.entries(path)
-  rescue
-    dir=""
-    begin
-      path.split("/").each do |dir_name|
-        dir += dir_name+"/"
-        add_path(dir)
-      end
-    rescue Exception => error
-      logger.error("check_path error: #{error.message}")
-      puts "unable to create directory #{path}. Made it to #{dir}"
-    end
-  end
-end
-
-def add_path(path)
-  begin
-    Dir.entries(path)
-  rescue
-    Dir.mkdir(path)
-  end
-end
-
-def graph_exists?( path, file_name, output_format )
-  complete_name = path+file_name+"."+output_format
-  return File.exist?( complete_name )
-end
-
-def graph_no_data (g, message)
-  main        = g.add_node( "main", 
-                    :label=> message, 
-                    :URL => abstracts_url(), 
-                    :target=>'_top', 
-                    :shape => 'box',
-                    :color => LatticeGridHelper.white_fill_color,
-                    :fillcolor => LatticeGridHelper.white_fill_color,
-                    :tooltip => 'Username is invalid')
-  return g
-end
-
-def node_label (node_object)
+def node_investigator_label(node_object)
   "#{node_object.name}: " +
-  "Publications: #{node_object.total_pubs}; " + 
+  "Publications: #{node_object.total_publications}; " + 
   "First author pubs: #{node_object.num_first_pubs}; " +
   "Last author pubs: #{node_object.num_last_pubs}; " +
   "intra-unit collab: #{node_object.num_intraunit_collaborators}; " +
   "inter-unit collabs: #{node_object.num_extraunit_collaborators}"
 end
 
-def node_award_label (node_object)
+def node_award_label(node_object)
   "#{node_object.title}: " +
   "Amount: #{node_object.total_amount}; " + 
   "Sponsor: #{node_object.sponsor_name}; " +
@@ -154,7 +155,7 @@ def node_award_label (node_object)
   (node_object.investigator_proposals.blank? ? " " : "Collaborators: #{node_object.investigator_proposals.length}; " )
 end
 
-def update_node (node_object, opts)
+def update_node(node_object, opts)
   keys = %w{ URL target tooltip label fontcolor fillcolor color fontsize shape }
   opts.keys.each do |key|
     if !opts[key].blank?
@@ -164,20 +165,25 @@ def update_node (node_object, opts)
   node_object
 end
 
+def set_node_defaults_investigator(investigator, aopts)
+  aopts[:URL]       = aopts[:URL]       || show_investigator_url(investigator.username, 1)
+  aopts[:target]    = aopts[:target]    || "_top"
+  aopts[:tooltip]   = aopts[:tooltip]   || node_investigator_label(investigator)
+  aopts[:label]     = aopts[:label]     || investigator.name
+  aopts[:fontcolor] = aopts[:fontcolor] || "#3d0d4c"
+  aopts[:fillcolor] = aopts[:fillcolor] || LatticeGridHelper.root_fill_color
+  aopts[:color]     = aopts[:color]     || "#904040"
+  aopts[:fontsize]  = aopts[:fontsize]  || 9
+  aopts
+end
+
 def graph_addroot(graph, root, aopts={} )
-  add_root = graph.get_node( root.id.to_s )
-  if add_root.nil? 
-    add_root = graph.add_node( root.id.to_s)
-    aopts[:URL]       = aopts[:URL]       || show_investigator_url(root.username, 1)
-    aopts[:target]    = aopts[:target]    || "_top"
-    aopts[:tooltip]   = aopts[:tooltip]   || node_label(root)
-    aopts[:label]     = aopts[:label]     || root.name
-    aopts[:fontcolor] = aopts[:fontcolor] || "#3d0d4c"
-    aopts[:fillcolor] = aopts[:fillcolor] || LatticeGridHelper.root_fill_color
-    aopts[:color]     = aopts[:color]     || "#904040"
-    aopts[:fontsize]  = aopts[:fontsize]  || 9
-  end
-  update_node(add_root, aopts) 
+  root_node = graph.get_node( root.id.to_s )
+  if root_node.nil? 
+    root_node = graph.add_node( root.id.to_s)
+    aopts = set_node_defaults_investigator(root, aopts)
+   end
+  update_node(root_node, aopts) 
 end
 
 def graph_newroot(graph, root, opts={} )
@@ -238,6 +244,17 @@ def edge_label(connection, root, leaf)
   "#{connection.publication_cnt} shared publications between #{leaf.name} and #{root.name}; " + 
   "MeSH similarity score: #{connection.mesh_tags_ic.round}; " + 
   "tags: "+ trunc_and_join_array((root.tag_list & leaf.tag_list))
+end
+
+def edge_investigator_label(investigator, connection, root, leaf)
+  if connection.blank?
+    "#{investigator.shared_publication_count} shared between #{leaf.name} and #{root.name}; " + 
+     "tags: "+ trunc_and_join_array((root.tag_list & leaf.tag_list))
+  else
+    "#{investigator.shared_publication_count} shared, total of #{connection.publication_cnt} shared publications between #{leaf.name} and #{root.name}; " + 
+    "MeSH similarity score: #{connection.mesh_tags_ic.round}; " + 
+    "tags: "+ trunc_and_join_array((root.tag_list & leaf.tag_list))
+  end
 end
 
 def edge_award_label(leaf)
@@ -305,6 +322,65 @@ def graph_add_node(program, g, root, root_node, connection, unit_list=[], mesh_o
   return g
 end
 
+def graph_add_investigator_node(program, g, root, root_node, investigator, unit_list=[], mesh_only=false, node_opts={}, edege_opts={} )
+#    g.add_node(plant[0]).label = plant[1]+"\\n"+ plant[2]+", "+plant[3]+"\\n("+plant[0]+")"
+  @graph_edges ||= {}
+  return g if investigator.nil?
+  return g if root.id == investigator.id
+  if ! @graph_edges.include?("#{root.id.to_s}_#{investigator.id.to_s}") 
+    leaf = investigator
+    leaf_node = g.get_node( leaf.id.to_s )
+    if leaf_node.nil? then # leaf_node = graph_addleaf(g, leaf, node_opts) 
+      nopts = node_opts.dup
+      intersection_unit_list = (unit_list & leaf.unit_list).compact
+      if intersection_unit_list.length == 0
+        nopts[:shape] = "doubleoctagon" 
+        if nopts[:fillcolor].blank? # first degree other
+          nopts[:fillcolor] = LatticeGridHelper.first_degree_other_fill_color
+        else #second degree member
+          nopts[:fillcolor] = LatticeGridHelper.second_degree_other_fill_color
+        end
+      else
+        if nopts[:fillcolor].blank? # first degree member
+          nopts[:fillcolor] = LatticeGridHelper.first_degree_fill_color
+        else #second degree member
+          nopts[:fillcolor] = LatticeGridHelper.second_degree_fill_color
+        end
+      end
+      leaf_node = graph_addleaf(g, leaf, nopts) 
+    end
+    @graph_edges << "#{root.id.to_s}_#{leaf.id.to_s}"
+    @graph_edges << "#{leaf.id.to_s}_#{root.id.to_s}"
+    connection = InvestigatorColleague.first(:conditions=>["investigator_colleagues.investigator_id = :investigator_id and investigator_colleagues.colleague_id = :colleague_id",
+      {:investigator_id => investigator.id, :colleague_id => root.id}])
+      
+    tooltiptext = edge_investigator_label(investigator, connection, root, leaf)
+    label = investigator.shared_publication_count
+    weight = investigator.shared_publication_count
+    if connection.blank?
+      url = investigator_url(investigator.id)
+    else
+      url = investigator_colleagues_copublication_url(connection.id)
+    end
+    this_edge = graph_addedge(g, root_node, leaf_node, url, tooltiptext, label, weight )
+  end
+  return g
+end
+
+
+def graph_add_investigator_nodes(program, g, root, investigators, stringency, mesh_only=false, node_opts={}, edge_opts={})
+  @graph_edges ||= {}
+  return g if investigators.nil? or investigators.length == 0
+  return g if root.nil?
+  root_node = g.get_node( root.id.to_s )
+  return g if root_node.nil?
+  unit_list = root.unit_list
+  investigators.each do |investigator|
+    g = graph_add_investigator_node(program, g, root, root_node, investigator, unit_list, mesh_only=false, node_opts, edge_opts ) if investigator.shared_publication_count.to_i >= stringency.to_i
+  end
+  return g
+end
+
 def graph_add_nodes(program, g, connections, mesh_only=false, node_opts={}, edge_opts={} )
 #    g.add_node(plant[0]).label = plant[1]+"\\n"+ plant[2]+", "+plant[3]+"\\n("+plant[0]+")"
   @graph_edges ||= {}
@@ -353,7 +429,7 @@ def graph_add_award_node(program, g, root, root_node, award, mesh_only=false, no
   return g
 end
 
-def graph_add_investigator_node(program, g, root, root_node, investigator, mesh_only=false, node_opts={}, edege_opts={} )
+def graph_add_award_investigator_node(program, g, root, root_node, investigator, mesh_only=false, node_opts={}, edege_opts={} )
 #    g.add_node(plant[0]).label = plant[1]+"\\n"+ plant[2]+", "+plant[3]+"\\n("+plant[0]+")"
   @graph_edges ||= {}
   return g if investigator.nil?
@@ -373,7 +449,7 @@ def graph_add_investigator_node(program, g, root, root_node, investigator, mesh_
   return g
 end
 
-def graph_add_investigator_nodes(program, g, root, investigators, mesh_only=false, node_opts={}, edge_opts={} )
+def graph_add_award_investigator_nodes(program, g, root, investigators, mesh_only=false, node_opts={}, edge_opts={} )
 #    g.add_node(plant[0]).label = plant[1]+"\\n"+ plant[2]+", "+plant[3]+"\\n("+plant[0]+")"
   @graph_edges ||= {}
   return g if investigators.nil? or investigators.length == 0
@@ -381,7 +457,7 @@ def graph_add_investigator_nodes(program, g, root, investigators, mesh_only=fals
   root_node = g.get_node( root.id.to_s )
   return g if root_node.nil?
   investigators.each do |investigator|
-    g = graph_add_investigator_node(program, g, root, root_node, investigator, mesh_only=false, node_opts, edge_opts )
+    g = graph_add_award_investigator_node(program, g, root, root_node, investigator, mesh_only=false, node_opts, edge_opts )
   end
   return g
 end

@@ -14,8 +14,6 @@ Rails::Initializer.run do |config|
   # Add additional load paths for your own custom dirs
   # config.load_paths += %W( #{RAILS_ROOT}/extras )
   
-  # config.gem "bcsec-rails", :lib => 'bcsec/rails', :version => '~> 2.0'
-  
   # Specify gems that this application depends on and have them installed with rake gems:install
   # config.gem "bj"
   # config.gem "hpricot", :version => '0.6', :source => "http://code.whytheluckystiff.net"
@@ -46,7 +44,7 @@ Rails::Initializer.run do |config|
   # config.i18n.default_locale = :de
   config.action_controller.session = {
     :key => '_cancer_latticegrid_session',
-    :secret      => 'this is a 2.0 rails requirement'
+    :secret      => 'd191041bea4ebc0533e3f68b1bb41c5a1233162b24232a0e15e'
   }
   
   # change the cache root

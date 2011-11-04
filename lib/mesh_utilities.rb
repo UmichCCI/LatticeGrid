@@ -2,6 +2,7 @@
 
 # added downcase to make sure all terms are atomic and not multi-cased!
 def RearrangeTermsWithCommas(term)
+  return nil if term.blank?
   a = term.split(",").collect{|x| x.strip}
   if a.length > 1 then
     d = a[1]+" "+a[0]
@@ -13,10 +14,16 @@ end
   
 def CleanMeshTerm(mesh_term)
   # mesh terms appear to be composite - term root plus one or more categories. For now strip off everything after root
-  return [] if mesh_term !~ /\*/
-  mesh_array = mesh_term.split(/\//).collect{ |a| a.gsub(/\*/,'')}
-  mesh_array.delete("Humans")
-  mesh_array.delete("Animals")
+  return [] if mesh_term !~ /\*/ or mesh_term.blank? or mesh_term.length < 3
+  mesh_term = mesh_term.gsub(/\(|\)|\#|\!|\&|\.|\'/,'')
+  return [] if mesh_term.blank? or mesh_term.length < 3
+  
+  mesh_array = mesh_term.downcase.split(/\//).collect{ |a| a.gsub(/\*/,'')}
+  mesh_array.delete("humans")
+  mesh_array.delete("animals")
+  mesh_array.delete("metabolism")
+  mesh_array = mesh_array.collect{|term| (term.blank? or term.length < 3 or mesh_term.length > 80) ? nil : term}
+  #mesh_array.compact
   return mesh_array.collect{ |term| RearrangeTermsWithCommas(term)}
 end
 
@@ -207,6 +214,7 @@ def AnalyzeInvestigatorColleague(investigator, update_only=true)
     next if ic_tag.taggable_id.to_i <= investigator.id.to_i
     return if ic_tag.total.to_i < 250
     colleague = Investigator.include_deleted(ic_tag.taggable_id)
+    next if colleague.nil?
     BuildInvestigatorColleague(investigator, colleague, update_only) if colleague.deleted_at.nil?
   end
 end
@@ -305,4 +313,116 @@ def find_cutoff(initial_number, ideal_number, cutoff_start)
     end
   end
   mesh_cutoff
+end
+
+def findDuplicateTags()
+  tags = Tag.all
+  innercnt = 0
+  last = tags.length-1
+  tags.each do |the_tag|
+    innercnt +=1
+    if the_tag.name.strip != the_tag.name
+      puts "Found tag name with spaces: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings"
+    end
+    if the_tag.name.length < 4
+      puts "Found short tag name: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings"
+    end
+    if the_tag.name =~ /^[0-9]/ 
+      puts "Found tag starting with numeric: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings"
+    end
+    tags[innercnt..last].each do |inner_tag|
+      if the_tag.name.downcase == inner_tag.name.downcase
+        puts "Found duplicate tag: #{the_tag.name}-id:#{the_tag.id} and #{inner_tag.name}-id:#{inner_tag.id}"
+      end
+    end
+   end
+end
+
+def resolveMisformedTags()
+  tags = Tag.all
+  tags_to_delete = []
+  tags.each do |the_tag|
+    if the_tag.name.strip != the_tag.name
+      puts "Found tag name with spaces: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings"
+      the_tag.name = the_tag.name.strip
+      the_tag.save!
+    end
+    if the_tag.name =~ /\(|\)|\#|\!|\&|\.|\'/
+      puts "Found tag name with bad characters: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings"
+      the_tag.name = the_tag.name.gsub(/\(|\)|\#|\!|\&|\.|\'/,'')
+      begin
+        the_tag.save!
+      rescue
+        puts "Duplicate tag exists: '#{the_tag.name}' deleting"
+        tags_to_delete << the_tag
+      end
+    end
+    if the_tag.name.length < 3
+      puts "Found short tag name: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings"
+      tags_to_delete << the_tag
+    end
+  end
+  deleteTags(tags_to_delete)
+end
+
+def resolveDuplicateTags()
+  tags = Tag.all
+  tags_to_delete = []
+  innercnt = 0
+  last = tags.length-1
+  puts "Processing #{tags.length} tags for duplications"
+  tags.each do |the_tag|
+    innercnt +=1
+    tags[innercnt..last].each do |inner_tag|
+      if the_tag.name.downcase == inner_tag.name.downcase
+        puts "Found duplicate tag: #{the_tag.name}-id:#{the_tag.id} and #{inner_tag.name}-id:#{inner_tag.id}"
+        if inner_tag.name.downcase == inner_tag.name
+          tags_to_delete << MoveTagsFromTo(the_tag,inner_tag)
+        else
+          tags_to_delete << MoveTagsFromTo(inner_tag,the_tag)
+        end
+      end
+    end
+  end
+  deleteTags(tags_to_delete)
+  tags = Tag.all
+  puts "Processing #{tags.length} tags for uppercase issues"
+  tags.each do |the_tag|
+    if the_tag.name.downcase != the_tag.name
+      puts "Found tag name with caps: '#{the_tag.name}' id:#{the_tag.id} with #{the_tag.taggings.count} taggings. Making lowercase"
+      the_tag.name = the_tag.name.downcase
+      the_tag.save!
+    end
+  end
+  puts "Completed processing #{tags.length} tags"
+  
+end
+
+def deleteTags(tags_to_delete)
+  tags_to_delete = tags_to_delete.sort{|x,y| x.id <=> y.id}.uniq
+  puts "deleting #{tags_to_delete.length} tags"
+  tags_to_delete.each do |the_tag|
+    the_tag.taggings.each do |the_tagging|
+      the_tagging.delete
+    end
+    the_tag.delete
+  end
+end
+
+def MoveTagsFromTo(tag1,tag2)
+  taggings1 = tag1.taggings.map(&:taggable_id)
+  taggings2 = tag2.taggings.map(&:taggable_id)
+  tag2.name = tag2.name.downcase
+  tag2.save
+  return tag1 if taggings1.length == 0
+  tag1.taggings.each do |the_tagging|
+    if taggings2.include?(the_tagging.taggable_id)
+      the_tagging.delete
+    else
+      the_tagging.tag_id = tag2.id
+      the_tagging.save!
+    end
+  end
+  puts "deleting tag #{tag1.id}:#{tag1.name}. Moved #{(taggings1-taggings2).length} tags, removed #{(taggings1&taggings2).length} tags"
+  tag1
 end

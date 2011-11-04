@@ -2,7 +2,7 @@
 
 body { 
 	font-family : Verdana, Arial, sans-serif;
-	font-size : 8pt;
+	font-size : 10pt;
 	color : black;
 	background-color: #dfdfdf; 
 	line-height: 16px;
@@ -126,6 +126,11 @@ table.borderless {
 	border: 0px;
 }
 
+table.borderless tr td,th {
+	padding-top: 0.5em;
+	padding-bottom: 0.2em;
+}
+
 table.dense {
 	border: 0px;
 }
@@ -174,7 +179,7 @@ table.dense tr td,th {
 	display: block;
 }
 
-#investigator_title #full_name {
+#investigator_title #full_name, #investigator_title #page_title {
     font-family: Arial, Helvetica, Geneva, Sans-serif;
     font-size: 15px;
     font-weight: bold;
@@ -524,6 +529,10 @@ div.notice {
 	color: #353;
 	background-color: peachpuff;
 	text-decoration: none;
+}
+.underlined {
+	color: #353;
+	text-decoration: underline;
 }
 .member_first_author, .member_last_author, .member_author {
 	font-weight: bold;

@@ -1,25 +1,27 @@
 class ProfilesController < ApplicationController
 
   caches_page( :show, :show_pubs, :ccsg ) if LatticeGridHelper.CachePages()
+  caches_action( :list_summaries )  if LatticeGridHelper.CachePages()
   before_filter :check_login
   after_filter  :log_request, :except => [:login, :welcome, :splash, :show_pubs, :edit, :edit_pubs, :ccsg]
   after_filter :check_login
 
   require 'cache_utilities'
 
-  include Bcsec::Rails::SecuredController if LatticeGridHelper.require_authentication?
+  include Aker::Rails::SecuredController if LatticeGridHelper.require_authentication?
   include ProfilesHelper
   include InvestigatorsHelper
   include ApplicationHelper
   include AbstractsHelper
+  include OrgsHelper
   
   include MeshHelper  #for the do_mesh_search method
 
   require 'publication_utilities' #all the helper methods
   require 'pubmed_utilities'  #loads including 'pubmed_config'  'bio' (bioruby) and 
   #  require 'pubmed_config' #look here to change the default time spans
-    # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
-    # verify :method => :post, :only => [ :search ], :redirect_to => :current_abstracts_url
+  # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
+  # verify :method => :post, :only => [ :search ], :redirect_to => :current_abstracts_url
   
   def index
     @username = (is_admin? ? params[:id] : current_user_model.username)
@@ -33,6 +35,107 @@ class ProfilesController < ApplicationController
     end
   end
 
+  def list_summaries
+    if is_admin?
+      @javascripts_add = ['jquery.tablesorter.min']
+      @approvals_after = LatticeGridHelper.logs_after
+      @investigators = Investigator.by_name
+      render
+    else
+      redirect_to :index
+    end
+  end
+
+  def list_summaries_by_program
+    if is_admin?
+      @javascripts_add = ['jquery.tablesorter.min']
+      @approvals_after = LatticeGridHelper.logs_after
+      @program = find_unit_by_id_or_name(params[:id])
+      @investigators = @program.members.by_name
+      respond_to do |format|
+        format.html { render :action => 'list_summaries' }
+        format.xml  { render :xml => @investigators }
+        format.xls  { 
+          @no_email=true
+          send_data(render(:template => 'profiles/list_summaries', :layout => "excel"),
+          :filename => "summaries_listing_for#{@program.name}.xls",
+          :type => 'application/vnd.ms-excel',
+          :disposition => 'attachment') }
+        format.doc  { 
+          @no_email=true
+          send_data(render(:template => 'profiles/list_summaries', :layout => "excel"),
+          :filename => "summaries_listing_for#{@program.name}.doc",
+          :type => 'application/msword',
+          :disposition => 'attachment') }
+        format.pdf {
+          @no_email=true
+          render( :pdf => "summaries_listing_for" + @program.name, 
+              :stylesheets => "pdf", 
+              :template => "profiles/list_summaries",
+              :layout => "pdf") }
+      end
+    else
+      redirect_to :index
+    end
+  end
+
+
+  def unreviewed_valid_abstracts
+    if is_admin? 
+      render_abstract_listing(Abstract.valid_unreviewed)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+
+  def reviewed_valid_abstracts
+    if is_admin? 
+      render_abstract_listing(Abstract.valid_reviewed)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+
+  def reviewed_invalid_abstracts
+    if is_admin? 
+      render_abstract_listing(Abstract.invalid_reviewed)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+
+  def reviewed_invalid_abstracts_with_investigators
+    if is_admin? 
+      render_abstract_listing(Abstract.invalid_with_investigators_reviewed)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+  
+  def invalid_abstracts_with_investigators
+    if is_admin? 
+      render_abstract_listing(Abstract.invalid_with_investigators)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+
+  def unreviewed_invalid_abstracts
+    if is_admin? 
+      render_abstract_listing(Abstract.invalid_unreviewed)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+
+  def unreviewed_invalid_abstracts_with_investigators
+    if is_admin? 
+      render_abstract_listing(Abstract.invalid_with_investigators_unreviewed)
+    else
+      redirect_to( current_abstracts_url)
+    end
+  end
+  #  invabs = InvestigatorAbstract.all(:conditions=>"is_valid = false ")
 
   def ccsg
     @date_range = DateRange.new(1.year.ago,Time.now)
@@ -165,7 +268,6 @@ class ProfilesController < ApplicationController
       format.pdf do
         @link_abstract_to_pubmed = true
         @abstracts = Abstract.display_all_investigator_data(@investigator.id)
-        @heading=@heading_base
         @show_valid_checkboxes = false
         render( :pdf => "Publication Listing for " + @investigator.name, 
             :stylesheets => "pdf", 
@@ -199,17 +301,48 @@ class ProfilesController < ApplicationController
     end
   end
 
-private
+  private
 
-def mark_investigator_abstracts_as_reviewed(investigator)
-  investigator.abstracts.each do |abstract|
-    before_abstract_save(abstract)
-    abstract.save!
+  def mark_investigator_abstracts_as_reviewed(investigator)
+    investigator.abstracts.each do |abstract|
+      before_abstract_save(abstract)
+      abstract.save!
+    end
+    investigator.investigator_abstracts.each do |ia|
+      before_abstract_save(ia)
+      ia.save!
+    end
   end
-  investigator.investigator_abstracts.each do |ia|
-    before_abstract_save(ia)
-    ia.save!
+
+  def render_abstract_listing(abstracts)
+    @abstracts = abstracts
+    respond_to do |format|
+      format.html { 
+       render :template => 'profiles/abstracts_listing'
+      }
+      format.xml  { 
+       render :xml => @abstracts }
+      format.xls  { 
+       @link_abstract_to_pubmed = true
+       send_data(render(:template => 'profiles/abstracts_listing', :layout => "excel"),
+       :filename => "abstracts_listing.xls",
+       :type => 'application/vnd.ms-excel',
+       :disposition => 'attachment') }
+      format.doc  { 
+       @link_abstract_to_pubmed = true
+       send_data(render(:template => 'profiles/abstracts_listing', :layout => "excel"),
+       :filename => "abstracts_listing.doc",
+       :type => 'application/msword',
+       :disposition => 'attachment') }
+      format.pdf do
+       @link_abstract_to_pubmed = true
+       @show_valid_checkboxes = false
+       render( :pdf => "Abstracts listing", 
+           :stylesheets => "pdf", 
+           :template => 'profiles/abstracts_listing',
+           :layout => "pdf")
+      end
+    end
   end
-end
 
 end

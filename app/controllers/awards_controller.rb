@@ -10,10 +10,13 @@ class AwardsController < ApplicationController
   
   def show 
     if params[:id].nil? then
-      redirect_to( year_list_abstracts_url)
+      redirect_to( current_abstracts_url)
     else
-      @award = Proposal.find_by_id(params[:id])
-        
+      if params[:id] =~ /^\d+$/
+        @award = Proposal.find_by_id(params[:id])
+      else
+        @award = Proposal.find_by_institution_award_number(params[:id])
+      end
       respond_to do |format|
         format.html { 
         	render
@@ -43,7 +46,7 @@ class AwardsController < ApplicationController
     @javascripts_add = ['jquery-ui.min']
     @stylesheets = [ 'publications', "latticegrid/#{lattice_grid_instance}", 'jquery-ui' ]
     if params[:id].nil? then
-      redirect_to( year_list_abstracts_url)
+      redirect_to( current_abstracts_url)
     else
       handle_member_name(false)  #sets @investigator
       @pi_awards = @investigator.investigator_proposals.by_role
@@ -61,8 +64,6 @@ class AwardsController < ApplicationController
           :disposition => 'attachment') }
         format.doc  { 
           @pdf = 1
-          @link_abstract_to_pubmed = true
-          @abstracts = Abstract.display_all_investigator_data(@investigator.id)
           send_data(render(:template => 'awards/investigator.html', :layout => "excel"),
           :filename => "award_listing_for_#{@investigator.first_name}_#{@investigator.last_name}.doc",
           :type => 'application/msword',

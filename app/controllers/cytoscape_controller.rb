@@ -1,15 +1,18 @@
 class CytoscapeController < ApplicationController
-  before_filter :check_allowed, :only => [:awards]
+  before_filter :check_allowed, :only => [:awards, :studies, :show_all]
 
-  caches_page( :show, :jit, :protovis, :member_cytoscape_data, :member_protovis_data, :disallowed) if LatticeGridHelper.CachePages()
+  caches_page( :show_org, :jit, :protovis, :member_cytoscape_data, :org_cytoscape_data, :member_protovis_data, :disallowed, :d3_data, :d3_date_data) if LatticeGridHelper.CachePages()
+  caches_action( :listing, :investigator, :awards, :studies )  if LatticeGridHelper.CachePages()
   
   require 'cytoscape_config'
   require 'cytoscape_generator'
   require 'protovis_generator'
+  require 'd3_generator'
   require 'infoviz_generator'
   include ApplicationHelper
   include CytoscapeHelper
   include InvestigatorsHelper
+  include OrgsHelper
 
 
   def index
@@ -17,16 +20,50 @@ class CytoscapeController < ApplicationController
 
   # cytoscape show
   def show
-    params[:depth] ||= 1
-    params[:include_awards] ||= 0
+    params[:include_awards] ||= "0"
+    params[:include_studies] ||= "0"
+    handle_data_params
+    @title ||= "Publications Collaborations"
     @investigator=Investigator.find_by_username(params[:id])
+    @dataurl ||= member_cytoscape_data_url(params[:id], params[:depth], params[:include_publications], params[:include_awards], params[:include_studies])
+    @base_path_without_depth = base_path(true)
+    render :action => :show
+  end
+
+  def show_all
+    handle_data_params
+    @title = "Publication/Award/Study Collaborations"
+    show
+  end
+
+
+  def show_org
+    params[:include_awards] ||= "0"
+    params[:include_studies] ||= "0"
+    handle_data_params
+    @title = "Publications Collaborations"
+    @org = find_unit_by_id_or_name(params[:id])
+    @dataurl = org_cytoscape_data_url(params[:id], params[:depth], params[:include_publications], params[:include_awards], params[:include_studies])
+    
+    show
   end
 
   def awards
-    params[:depth] ||= 1
-    params[:include_awards] ||= 1
+    params[:include_publications] ||= "0"
+    params[:include_studies] ||= "0"
+    handle_data_params
+    @title = "Award Collaborations"
     @investigator=Investigator.find_by_username(params[:id])
-    render :action => :show
+    show
+  end
+
+  def studies
+    params[:include_awards] ||= "0"
+    params[:include_publications] ||= "0"
+    handle_data_params
+    @title = "Research Study Collaborations"
+    @investigator=Investigator.find_by_username(params[:id])
+    show
   end
 
   def jit
@@ -42,20 +79,24 @@ class CytoscapeController < ApplicationController
   end
 
   def member_cytoscape_data
-    investigator=Investigator.find_by_username(params[:id])
-    params[:depth] ||= 1
-    depth = params[:depth].to_i
-    params[:include_awards] ||= 1
-    include_awards = params[:include_awards].to_i
+    @investigator=Investigator.find_by_username(params[:id])
+    handle_data_params
     data_schema = generate_cytoscape_schema()
-    if !include_awards.blank? and include_awards != 0
-      data = generate_cytoscape_award_data(investigator, depth)
-    else
-      data = generate_cytoscape_data(investigator, depth)
-    end
+    data = generate_cytoscape_data(@investigator, params[:depth].to_i, params[:include_publications].to_i, params[:include_awards].to_i, params[:include_studies].to_i)
     respond_to do |format|
-      #format.json{ render :partial => "member_protovis_data", :locals => {:nodes_array_hash => nodes_array_hash, :edges_array_hash => edges_array_hash}  }
       format.json{ render :layout=> false, :json=> {:dataSchema => data_schema.as_json(), :data => data.as_json()}  }
+      format.js{ render :layout=> false, :json=> {:dataSchema => data_schema.as_json(), :data => data.as_json()}  }
+    end
+  end
+
+  def org_cytoscape_data
+    @org = find_unit_by_id_or_name(params[:id])
+    handle_data_params
+    data_schema = generate_cytoscape_schema()
+    data = generate_cytoscape_org_data(@org, params[:depth].to_i, params[:include_publications].to_i, params[:include_awards].to_i, params[:include_studies].to_i)
+    respond_to do |format|
+      format.json{ render :layout=> false, :json=> {:dataSchema => data_schema.as_json(), :data => data.as_json()}  }
+      format.js{ render :layout=> false, :json=> {:dataSchema => data_schema.as_json(), :data => data.as_json()}  }
     end
   end
 
@@ -71,6 +112,66 @@ class CytoscapeController < ApplicationController
     end
   end
 
+  #d3 methods
+  def chord
+    @json_callback = "../cytoscape/d3_data.json"
+    @title = 'Chord Diagram showing inter- and intra-programmatic publications for all programs'
+    unless params[:id].blank?
+      program = OrganizationalUnit.find_by_id(params[:id])
+      unless program.blank?
+        flash[:notice] = "unable to find unit"
+        params[:id] = nil
+      else
+        @json_callback = "../cytoscape/"+params[:id]+"/d3_data.json"
+        @title = 'Chord Diagram showing inter- and intra-programmatic publications for '+program.name
+      end
+    end
+    respond_to do |format|
+      format.html { render :layout => 'd3'  }
+      format.json{ render :layout=> false, :text => ""  }
+    end
+  end
+  
+  def chord_by_date
+    start_date = params[:start_date] || 5.years.ago.to_date
+    end_date = params[:end_date] || Date.today
+    start_date = start_date.to_date
+    end_date = end_date.to_date
+    @json_callback = "../cytoscape/"+start_date.to_s(:db_date)+"/" + end_date.to_s(:db_date) + "/d3_date_data.json"
+    @title = 'Chord Diagram showing inter- and intra-programmatic publications for all programs from ' + start_date.to_s(:justdate) + ' to ' + end_date.to_s(:justdate)
+    respond_to do |format|
+      format.html { render :layout => 'd3', :action => :chord  }
+      format.json{ render :layout=> false, :text => ""  }
+    end
+  end
+
+  def d3_data
+    @units = @head_node.descendants.sort_by(&:abbreviation)
+    if (params[:id].blank?)
+      # children are one level down - descendents are all levels down
+      graph = d3_all_units_graph(@units)
+    else 
+      @master_unit = OrganizationalUnit.find_by_id(params[:id])
+      graph = d3_master_unit_graph(@units,@master_unit)
+    end
+    depth = 1    
+    respond_to do |format|
+      #format.json{ render :partial => "member_protovis_data", :locals => {:nodes_array_hash => protovis_nodes, :edges_array_hash => protovis_edges}  }
+      format.json{ render :layout=> false, :json => graph.as_json() }
+    end
+  end
+
+  def d3_date_data
+    @units = @head_node.descendants.sort_by(&:abbreviation)
+    graph = d3_units_by_date_graph(@units, params[:start_date].to_date,  params[:end_date].to_date)
+    depth = 1    
+    respond_to do |format|
+      #format.json{ render :partial => "member_protovis_data", :locals => {:nodes_array_hash => protovis_nodes, :edges_array_hash => protovis_edges}  }
+      format.json{ render :layout=> false, :json => graph.as_json() }
+    end
+  end
+
+
 
    private  
    def check_allowed
@@ -78,6 +179,13 @@ class CytoscapeController < ApplicationController
        redirect_to disallowed_awards_url
      end
    end
-
+   
+   def handle_data_params
+     params[:depth] ||= "1"
+     params[:include_awards] ||= "1"
+     params[:include_studies] ||= "1"
+     params[:include_publications] ||= "1"
+     params[:include_publications] = "1" if params[:include_awards] == "0" and params[:include_studies] == "0"
+   end
  
 end

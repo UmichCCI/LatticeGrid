@@ -1,6 +1,14 @@
 class Investigator < ActiveRecord::Base
   acts_as_taggable  # for MeSH terms
   acts_as_tsearch :vectors => {:fields => ["first_name","last_name", "username", "title"]}
+
+  has_many :logs
+  has_many :investigator_studies
+  has_many :studies, 
+    :through => :investigator_studies
+  has_many :investigator_pi_studies,  
+    :class_name => "InvestigatorStudy",
+    :conditions => ["investigator_studies.role = 'PI'"]
   
   has_many :investigator_proposals
   has_many :proposals, 
@@ -37,9 +45,13 @@ class Investigator < ActiveRecord::Base
     :through => :investigator_nonpi_proposals,
     :conditions => ['proposals.award_end_date >= :now', {:now => Date.today }]
 
-
   has_many :investigator_abstracts
+  
   has_many :investigator_colleagues
+  has_many :colleague_investigators,
+    :class_name => "InvestigatorColleague",
+    :foreign_key => 'colleague_id'
+
   has_many :similar_investigators, 
       :class_name => "InvestigatorColleague", 
       :include => [:colleague], 
@@ -60,18 +72,24 @@ class Investigator < ActiveRecord::Base
          :conditions => ['investigator_abstracts.is_valid = true']
 #  has_many :investigator_abstracts_meshes
 #  has_many :meshes, :through => :investigator_abstracts_meshes
-  has_many :investigator_appointments,
-    :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
+has_many :investigator_appointments,
+  :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
+  has_many :all_investigator_appointments,
+    :class_name => "InvestigatorAppointment"
+
   has_many :joints, :class_name => "Joint",
     :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
   has_many :secondaries, :class_name => "Secondary",
-      :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
+    :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
   has_many :member_appointments, :class_name => "Member",
-        :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
+    :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
+  has_many :associate_member_appointments, :class_name => "AssociateMember",
+    :conditions => ['investigator_appointments.end_date is null or investigator_appointments.end_date >= :now', {:now => Date.today }]
   has_many :appointments, :source => :organizational_unit, :through => :investigator_appointments
   has_many :joint_appointments, :source => :organizational_unit, :through => :joints
   has_many :secondary_appointments, :source => :organizational_unit, :through => :secondaries
   has_many :memberships, :source => :organizational_unit, :through => :member_appointments
+  has_many :associate_memberships, :source => :organizational_unit, :through => :associate_member_appointments
   # foreign_key is a fix for an issue in rails 2.3.5 and earlier
   belongs_to :home_department, :class_name => 'OrganizationalUnit', :foreign_key => 'home_department_id'
 
@@ -90,10 +108,22 @@ class Investigator < ActiveRecord::Base
   named_scope :by_name, :order => "lower(last_name), lower(first_name)"
 
   named_scope :for_tag_ids, lambda { |*ids|
-      {:joins => [:taggings], 
-       :conditions => ['taggings.tag_id IN (:ids) ', {:ids => ids.first}] }
+    {:joins => [:taggings], 
+     :conditions => ['taggings.tag_id IN (:ids) ', {:ids => ids.first}] }
+  }
+  named_scope :complement_of_ids, lambda { |*ids|
+    {:conditions => ['investigators.id NOT IN (:ids)', {:ids => ids.first}] }
+  }
+  named_scope :with_abstract_ids, lambda { |*ids|
+    { :joins => [:investigator_abstracts],
+      :conditions => ['investigator_abstracts.abstract_id IN (:ids)', {:ids => ids.first}] }
+  }
+  named_scope :with_abstract_ids_and_not_investigator, lambda { |*ids|
+    { :joins => [:investigator_abstracts],
+      :conditions => ['investigator_abstracts.abstract_id IN (:ids) AND NOT investigator_abstracts.investigator_id = :investigator_id', {:ids => ids.first, :investigator_id => ids[1] }] 
     }
-    
+  }
+
   default_scope :conditions => '(investigators.deleted_at is null and investigators.end_date is null)'
 #  default_scope :include => :abstracts
   #default_scope :order => 'lower(investigators.last_name),lower(investigators.first_name)'
@@ -101,14 +131,47 @@ class Investigator < ActiveRecord::Base
   validates_presence_of :username
   validates_uniqueness_of :username
 
+  def shared_abstracts_with_investigator(id)
+    Abstract.all(:joins => ", investigator_abstracts, investigator_abstracts ia2",
+        :conditions => ['investigator_abstracts.abstract_id  = abstracts.id and ia2.abstract_id = abstracts.id and investigator_abstracts.is_valid = true and ia2.is_valid = true and ia2.investigator_id = :id and  investigator_abstracts.investigator_id = :pi_id', {:id => id, :pi_id => self.id }]
+      )
+  end
+  
   def self.include_deleted( id=nil )
     with_exclusive_scope do
       if id.blank?
         find(:all)
       else
-        find(id)
+        find_by_id(id)
       end
     end
+  end
+
+  def self.deleted_with_valid_abstracts
+    with_exclusive_scope do
+      all(:conditions=>"investigators.deleted_at is not null and  investigator_abstracts.is_valid = true and investigators.id = investigator_abstracts.investigator_id and investigator_abstracts.abstract_id = abstracts.id and abstracts.is_valid = true", :include=>[:investigator_abstracts, :abstracts] )
+    end
+  end
+
+  def self.delete_deleted( id )
+    with_exclusive_scope do
+        delete(id)
+    end
+  end
+
+
+  def self.find_purged( )
+    with_exclusive_scope do
+      all(:conditions=>["investigators.deleted_at is not null"])
+    end
+  end
+
+  def self.find_updated( )
+    all(:conditions=>["updated_at > :recent", {:recent=>Time.now-10.days}])
+  end
+
+  def self.find_not_updated( )
+    all(:conditions=>["updated_at is null or updated_at <= :recent", {:recent=>Time.now-10.days}])
   end
 
   def self.find_by_username_including_deleted( val )
@@ -117,10 +180,20 @@ class Investigator < ActiveRecord::Base
     end
   end
 
+  def self.find_all_by_username_including_deleted( val )
+    with_exclusive_scope do
+        find_all_by_username(val)
+    end
+  end
+
   def self.find_by_email_including_deleted( val )
     with_exclusive_scope do
         find_by_email(val)
     end
+  end
+
+  def self.has_basis_without_connections(basis)
+    all(:conditions=>["investigators.appointment_basis = :basis and (not exists(select 'x' from investigator_abstracts where investigator_abstracts.investigator_id = investigators.id and investigator_abstracts.is_valid = true) and not exists(select 'x' from investigator_studies where investigator_studies.investigator_id = investigators.id) and not exists(select 'x' from investigator_proposals where investigator_proposals.investigator_id = investigators.id) )", {:basis=>basis}] )
   end
   
   def colleague_coauthors
@@ -152,14 +225,22 @@ class Investigator < ActiveRecord::Base
     #    LEFT JOIN proposals pi_proposals_investigators ON (pi_proposals_investigators.id = pi_proposals_investigators_join.proposal_id) AND investigator_proposals.role = 'PD/PI'  
     #    LEFT JOIN investigator_proposals nonpi_proposals_investigators_join ON (investigators.id = nonpi_proposals_investigators_join.investigator_id)  
     #    LEFT JOIN proposals nonpi_proposals_investigators ON (nonpi_proposals_investigators.id = nonpi_proposals_investigators_join.proposal_id) AND NOT investigator_proposals.role = 'PD/PI' 
-    #    ").select( "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_pubs_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_pubs, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests, sum(proposals.direct_amount) as direct_totals, sum(proposals.indirect_amount) as indirect_totals,sum(proposals.total_amount) as proposal_totals, count(proposals.*) as proposals_count, sum(pi_proposals_investigators.direct_amount) as pi_direct_totals, sum(pi_proposals_investigators.indirect_amount) as pi_indirect_totals, sum(pi_proposals_investigators.total_amount) as pi_proposal_totals, count(pi_proposals_investigators.*) as pi_proposals_count, sum(nonpi_proposals_investigators.direct_amount) as nonpi_direct_totals, sum(nonpi_proposals_investigators.indirect_amount) as nonpi_indirect_totals, sum(nonpi_proposals_investigators.total_amount) as nonpi_proposal_totals, count(nonpi_proposals_investigators.*) as nonpi_proposals_count 
-    #    ").group("investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_pubs_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_pubs, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.weekly_hours_min, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests" )
+    #    ").select( "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests, sum(proposals.direct_amount) as direct_totals, sum(proposals.indirect_amount) as indirect_totals,sum(proposals.total_amount) as proposal_totals, count(proposals.*) as proposals_count, sum(pi_proposals_investigators.direct_amount) as pi_direct_totals, sum(pi_proposals_investigators.indirect_amount) as pi_indirect_totals, sum(pi_proposals_investigators.total_amount) as pi_proposal_totals, count(pi_proposals_investigators.*) as pi_proposals_count, sum(nonpi_proposals_investigators.direct_amount) as nonpi_direct_totals, sum(nonpi_proposals_investigators.indirect_amount) as nonpi_indirect_totals, sum(nonpi_proposals_investigators.total_amount) as nonpi_proposal_totals, count(nonpi_proposals_investigators.*) as nonpi_proposals_count 
+    #    ").group("investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.weekly_hours_min, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests" )
      
   def self.proposal_totals(limit=nil)
     all( :joins => " INNER JOIN (investigator_proposals investigator_proposals1  INNER JOIN proposals proposals1 ON (investigator_proposals1.proposal_id = proposals1.id )) ON (investigators.id = investigator_proposals1.investigator_id) ", 
-        :select => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_pubs_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_pubs, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests, sum(proposals1.direct_amount) as directs_total, sum(proposals1.indirect_amount) as indirects_total,sum(proposals1.total_amount) as proposals_total, count(investigator_proposals1.*) as proposals_count",
-        :group => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_pubs_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_pubs, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.weekly_hours_min, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests",
+        :select => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests, sum(proposals1.direct_amount) as directs_total, sum(proposals1.indirect_amount) as indirects_total,sum(proposals1.total_amount) as proposals_total, count(investigator_proposals1.*) as proposals_count",
+        :group => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.weekly_hours_min, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests",
         :order => "proposals_total desc", :limit => limit)
+    
+  end
+
+  def self.study_totals(limit=nil)
+    all( :joins => " LEFT OUTER JOIN investigator_studies investigator_studies1  ON (investigators.id = investigator_studies1.investigator_id) LEFT OUTER JOIN studies studies1  ON (investigator_studies1.study_id = studies1.id)", 
+        :select => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests, investigators.home_department_name, count(distinct investigator_studies1.*) as study_count, count(distinct studies1.investigator_id) as study_collaborators_count",
+        :group => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.ssn, investigators.birth_date, investigators.sex, investigators.weekly_hours_min, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests, investigators.home_department_name",
+        :order => "study_count desc", :limit => limit)
     
   end
 
@@ -258,14 +339,10 @@ class Investigator < ActiveRecord::Base
     (investigators.collect(&:id)+investigators2.collect(&:investigator_id)).uniq.length
   end
 
-  def self.investigators_tsearch(terms)
-    find_by_tsearch(terms)
-  end
-
   def self.all_tsearch(terms)
     investigators = find_by_tsearch(terms)
     abstract_ids = Abstract.find_by_tsearch(terms, :select => 'ID')
-    investigators2 = all(:select => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_pubs_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_pubs, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.birth_date, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests,  count(investigator_abstracts.abstract_id) as the_cnt", :joins=>:investigator_abstracts, :conditions=>['investigator_abstracts.abstract_id IN (:abstract_ids)', {:abstract_ids => abstract_ids, :investigator_ids => investigators.collect(&:id)}], :group => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_pubs_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_pubs, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.birth_date, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests", :order => 'the_cnt desc, investigators.total_pubs desc, investigators.last_name')
+    investigators2 = all(:select => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.birth_date, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests,  count(investigator_abstracts.abstract_id) as the_cnt", :joins=>:investigator_abstracts, :conditions=>['investigator_abstracts.abstract_id IN (:abstract_ids)', {:abstract_ids => abstract_ids, :investigator_ids => investigators.collect(&:id)}], :group => "investigators.id, investigators.username, investigators.home_department_id, investigators.last_name, investigators.first_name, investigators.middle_name, investigators.email, investigators.degrees, investigators.suffix, investigators.employee_id, investigators.title, investigators.campus, investigators.appointment_type, investigators.appointment_track, investigators.appointment_basis, investigators.pubmed_search_name, investigators.pubmed_limit_to_institution, investigators.num_first_pubs_last_five_years, investigators.num_last_pubs_last_five_years, investigators.total_publications_last_five_years, investigators.num_intraunit_collaborators_last_five_years, investigators.num_extraunit_collaborators_last_five_years, investigators.num_first_pubs, investigators.num_last_pubs, investigators.total_publications, investigators.num_intraunit_collaborators, investigators.num_extraunit_collaborators, investigators.last_pubmed_search, investigators.mailcode, investigators.address1, investigators.address2, investigators.city, investigators.state, investigators.postal_code, investigators.country, investigators.business_phone, investigators.home_phone, investigators.lab_phone, investigators.fax, investigators.pager, investigators.birth_date, investigators.nu_start_date, investigators.start_date, investigators.end_date, investigators.faculty_keywords, investigators.faculty_research_summary, investigators.faculty_interests", :order => 'the_cnt desc, investigators.total_publications desc, investigators.last_name')
     (investigators+investigators2).uniq
   end
 
@@ -276,7 +353,10 @@ class Investigator < ActiveRecord::Base
     (investigators+investigators2).uniq
   end
 
-
+  def self.investigators_tsearch(terms)
+    find_by_tsearch(terms)
+  end
+  
   def self.display_tsearch(terms)
     find_by_tsearch(terms)
   end
@@ -312,19 +392,23 @@ class Investigator < ActiveRecord::Base
   end
   
   def self.distinct_primary_appointments()
-    find(:all, :select => 'DISTINCT home_department_id as organizational_unit_id' ).collect(&:organizational_unit_id)
+    all(:select => 'DISTINCT home_department_id as organizational_unit_id' ).collect(&:organizational_unit_id)
   end
 
   def self.distinct_joint_appointments()
-    find(:all, :joins => [:investigator_appointments], :select => 'DISTINCT organizational_unit_id', :conditions=>"type='Joint'").collect(&:organizational_unit_id)
+    all(:joins => [:investigator_appointments], :select => 'DISTINCT organizational_unit_id', :conditions=>"type='Joint'").collect(&:organizational_unit_id)
   end
 
   def self.distinct_secondary_appointments()
-     find(:all, :joins => [:investigator_appointments], :select => 'DISTINCT organizational_unit_id', :conditions=>"type='Secondary'").collect(&:organizational_unit_id)
+     all(:joins => [:investigator_appointments], :select => 'DISTINCT organizational_unit_id', :conditions=>"type='Secondary'").collect(&:organizational_unit_id)
   end
 
   def self.distinct_memberships()
-      find(:all, :joins => [:member_appointments], :select => 'DISTINCT organizational_unit_id').collect(&:organizational_unit_id)
+      all(:joins => [:member_appointments], :select => 'DISTINCT organizational_unit_id').collect(&:organizational_unit_id)
+  end
+
+  def self.distinct_associate_memberships()
+      all(:joins => [:associate_member_appointments], :select => 'DISTINCT organizational_unit_id').collect(&:organizational_unit_id)
   end
 
   def self.distinct_other_appointments_or_memberships()
@@ -333,6 +417,22 @@ class Investigator < ActiveRecord::Base
   
   def self.distinct_all_appointments_and_memberships()
     (distinct_other_appointments_or_memberships()+distinct_primary_appointments()).uniq.compact
+  end
+
+  def self.with_studies()
+      all( :joins => [:studies])
+  end
+
+  def self.has_studies()
+      all( :conditions => ["exists(select 'x' from investigator_studies where investigator_studies.investigator_id = investigators.id )"])
+  end
+
+  def self.with_pi_studies()
+      all( :joins => [:investigator_pi_studies])
+  end
+  
+  def self.has_pi_studies()
+      all( :conditions => ["exists(select 'x' from investigator_studies where investigator_studies.investigator_id = investigators.id and investigator_studies.role = 'PI')"])
   end
   
   def self.all_members()
@@ -347,7 +447,11 @@ class Investigator < ActiveRecord::Base
   def self.no_appointments()
     all(  :conditions => ["not exists(select 'x' from investigator_appointments where investigator_appointments.investigator_id = investigators.id )"] )
   end
-  
+
+  def self.without_programs()
+    all(  :conditions => ["not exists(select 'x' from investigator_appointments where investigator_appointments.investigator_id = investigators.id and investigator_appointments.type = 'Member' and investigator_appointments.end_date is null )"] )
+  end
+
   
 # used in the rake tasks to add to the investigator object attributes
 

@@ -12,11 +12,11 @@ namespace :cache do
   task :clear => :environment do
     block_timing("cache:clear") {
     if File.directory?(public_path) then
-        directories= %w{graphs abstracts investigators programs orgs member_nodes org_nodes copublications graphviz mesh cytoscape member_cytoscape_data investigators_search profiles investigators_search_all awards}
+        directories= %w{graphs abstracts investigators programs orgs member_nodes org_nodes copublications graphviz mesh cytoscape member_cytoscape_data org_cytoscape_data investigators_search profiles investigators_search_all awards}
       directories.each do |name|
         clear_directory(name)
       end
-      files = %w{programs.html orgs.html ccsg.html mesh.html mesh.json mesh.xml js.html xml.html json.html investigators_search.html test.html investigators_search_all.html}
+      files = %w{programs.html orgs.html ccsg.html mesh.html mesh.json mesh.xml js.html xml.html json.html investigators_search.html test.html investigators_search_all.html high_impact.html}
       files.each do |name|
         name="#{name}"
         clear_file(name)
@@ -72,6 +72,7 @@ namespace :cache do
   def do_abstracts_for_year(year)
     page = 1
     run_ajax_curl tag_cloud_by_year_abstract_url(:id => year)
+    run_curl high_impact_by_month_abstracts_url()
     run_curl full_year_list_abstract_url(:id => year)
     abstracts = Abstract.display_data( year, page )
     total_entries = abstracts.total_entries
@@ -108,11 +109,11 @@ namespace :cache do
       run_curl tag_count_mesh_url(:id => mesh.name)
       run_curl tag_count_mesh_url(:id => mesh.id)
       run_json_curl tag_count_mesh_url(:id => mesh.name, :format => 'json')
-      run_xml_curl  tag_count_mesh_url(:id => mesh.name, :format => 'xml')
+      #run_xml_curl  tag_count_mesh_url(:id => mesh.name, :format => 'xml')
       run_curl investigators_mesh_url(:id => mesh.name)
       run_curl investigators_mesh_url(:id => mesh.id)
       run_json_curl investigators_mesh_url(:id => mesh.name, :format => 'json')
-      run_xml_curl  investigators_mesh_url(:id => mesh.name, :format => 'xml')
+      #run_xml_curl  investigators_mesh_url(:id => mesh.name, :format => 'xml')
        #run_curl url_for :controller => 'investigators', :action => 'show', :id => inv.username, :page => 1
     end
   end
@@ -132,6 +133,7 @@ namespace :cache do
       run_curl full_show_org_url(:id => org.id)
       run_ajax_curl tag_cloud_org_url(:id => org.id)
       run_ajax_curl short_tag_cloud_org_url(:id => org.id)
+      run_ajax_curl org_cytoscape_data_url(:id=>org.id, :depth=>1, :include_publications=>1, :include_awards=>0, :include_studies=>0)
     end
   end
 
@@ -143,6 +145,51 @@ namespace :cache do
       run_curl member_nodes_url(inv.username)
     
     end
+  end
+
+  def investigator_awards
+    @AllInvestigators.each do |inv|
+ #     run_curl awards_cytoscape_url( inv.username)  
+      run_curl investigator_award_url(inv.username)
+     end
+  end
+
+  def awards
+    run_curl listing_awards_url
+    @AllAwards.each do |award|
+      run_curl award_url( award.id)  
+     end
+  end
+
+  def investigator_studies
+    @AllInvestigators.each do |inv|
+#      run_curl studies_cytoscape_url( inv.username)  
+      run_curl investigator_study_url(inv.username)
+     end
+  end
+
+  def studies
+    run_curl listing_studies_url
+    @AllStudies=Study.all
+    @AllStudies.each do |study|
+      run_curl study_url( study.id)  
+     end
+  end
+
+  def investigator_cytoscape
+    @AllInvestigators.each do |inv|
+      #study data
+      run_ajax_curl member_cytoscape_data_url(:id=>inv.username, :depth=>1, :include_publications=>0, :include_awards=>0, :include_studies=>1)
+      #award data
+      run_ajax_curl member_cytoscape_data_url(:id=>inv.username, :depth=>1, :include_publications=>0, :include_awards=>1, :include_studies=>0)
+      #publications data
+      run_ajax_curl member_cytoscape_data_url(:id=>inv.username, :depth=>1, :include_publications=>1, :include_awards=>0, :include_studies=>0)
+      run_ajax_curl member_cytoscape_data_url(:id=>inv.username, :depth=>2, :include_publications=>1, :include_awards=>0, :include_studies=>0)
+      #all data
+      run_ajax_curl member_cytoscape_data_url(:id=>inv.username, :depth=>1, :include_publications=>1, :include_awards=>1, :include_studies=>1)
+      puts "generated cytoscape data for #{inv.name}: #{inv.username}"
+      #break
+     end
   end
 
   def investigator_graphviz
@@ -194,8 +241,8 @@ namespace :cache do
     end
   end
 
-  task :populate => [:setup_url_for,:getInvestigators, :getAllOrganizations, :getTags] do
-    tasknames = %w{abstracts investigators orgs investigator_graphs org_graphs investigator_graphviz org_graphviz mesh}
+  task :populate => [:setup_url_for,:getInvestigators, :getAllOrganizations, :getTags, :getAwards] do
+    tasknames = %w{abstracts investigators orgs investigator_graphs org_graphs investigator_graphviz org_graphviz mesh investigator_awards awards investigator_studies studies investigator_cytoscape}
     if ENV["taskname"].nil?
       puts "sorry. You need to call 'rake cache:populate taskname=task' where task is one of #{tasknames.join(', ')}"
     else
@@ -204,12 +251,17 @@ namespace :cache do
       case 
         when taskname == 'abstracts': abstracts
         when taskname == 'investigators': investigators
+        when taskname == 'awards': awards
         when taskname == 'orgs': orgs
         when taskname == 'mesh': mesh
         when taskname == 'investigator_graphs': investigator_graphs
         when taskname == 'investigator_graphviz': investigator_graphviz
+        when taskname == 'investigator_awards': investigator_awards
         when taskname == 'org_graphs': org_graphs
         when taskname == 'org_graphviz': org_graphviz
+        when taskname == 'investigator_studies': investigator_studies
+        when taskname == 'studies': studies
+        when taskname == 'investigator_cytoscape': investigator_cytoscape
         else puts "sorry - unknown caching task #{taskname}."
       end    
       }

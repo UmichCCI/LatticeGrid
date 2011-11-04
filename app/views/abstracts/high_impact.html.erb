@@ -1,4 +1,5 @@
-<h2>High Impact Factor Journals Listing</h2>
+<span style="float:right; padding-right:15px; z-index:3; "><%= link_to( "as pdf",high_impact_abstracts_url('pdf')) if !defined?(@pdf) and ! @pdf %></span>
+<h2>High Impact-Factor Journals Listing</h2>
 <p>Journal rankings for the most recent ranking period (<%= @high_impact[0].score_year if @high_impact.length > 0 %>) are listed.</p>
 <p>Please keep this information in mind when interpreting Impact Factors - the size of the field and patterns of publication are very important. See this Wikipedia article for more information: 
 <a href="http://en.wikipedia.org/wiki/Impact_factor">About Impact Factors</a>. The Article Influence Score might be a better way to rank the publications. See this Wikipedia article for more information: <a href="http://en.wikipedia.org/wiki/Eigenfactor">About Eigenfactor and Article Influence Score</a>.
@@ -7,7 +8,7 @@
 <table cellpadding="2" cellspacing="0"> 
   <tr valign="bottom" class="list-heading">
 	  <th align="right"># &nbsp; </th>
-	  <th align="left">Journal &nbsp; </th>
+	  <th align="left" width="170px">Journal &nbsp; </th>
 	  <th align="left">ISSN &nbsp; </th>
 	  <th align="left">Total Cites (<%= @high_impact[0].score_year %>) &nbsp; </th>
 	  <th align="left">Total Articles (<%= @high_impact[0].score_year %>) &nbsp; </th>
@@ -35,4 +36,4 @@
 </table>
 
 </div>
-
+<p>&nbsp;</p>

@@ -5,7 +5,7 @@ class GraphvizController < ApplicationController
   require 'graphviz_config'
   require 'csv_generator'
   require 'graph_generator'
-
+ 
   helper :all
 
   include ApplicationHelper
@@ -13,12 +13,14 @@ class GraphvizController < ApplicationController
   include MeshHelper # for do_mesh_search
 
   def show_member
+    @javascripts_add = ['prototype', 'scriptaculous', 'effects']
     @investigator = Investigator.find_by_username(params[:id])
     params[:analysis]="member"
     show_core
   end 
 
   def show_member_awards
+    @javascripts_add = ['prototype', 'scriptaculous', 'effects']
     @investigator = Investigator.find_by_username(params[:id])
     params[:analysis]="member_awards"
     show_core
@@ -69,12 +71,14 @@ class GraphvizController < ApplicationController
    
 
   def show_member_mesh
+    @javascripts_add = ['prototype', 'scriptaculous', 'effects']
     @investigator = Investigator.find_by_username(params[:id])
     params[:analysis]="member_mesh"
     show_core
   end 
 
   def show_mesh
+    @javascripts_add = ['prototype', 'scriptaculous', 'effects']
     mesh_terms = MeshHelper.do_mesh_search(params[:id])
     @name=mesh_terms.collect(&:name).join(', ')
     params[:analysis]="mesh"
@@ -82,18 +86,21 @@ class GraphvizController < ApplicationController
   end 
 
   def show_org
+    @javascripts_add = ['prototype', 'scriptaculous', 'effects']
     @name = get_org_name(params[:id])
     params[:analysis]="org"
     show_core
    end 
 
    def show_org_org
+     @javascripts_add = ['prototype', 'scriptaculous', 'effects']
      @name = get_org_name(params[:id])
      params[:analysis]="org_org"
      show_core
     end 
 
   def show_org_mesh
+    @javascripts_add = ['prototype', 'scriptaculous', 'effects']
     @name = get_org_name(params[:id])
     params[:analysis]="org_mesh"
     show_core
@@ -112,7 +119,7 @@ class GraphvizController < ApplicationController
     #send_graphviz/:id/:analysis/:distance/:stringency/:program.:format'
     handle_graphviz_setup
     @file_name = "public/#{@graph_path}#{params[:program]}.#{@output_format}"
-
+    logger.warn "fgraphviz file name: #{@file_name}"
     send_file @file_name, :type=> @content_type, :disposition => 'inline'
    end
 
@@ -131,6 +138,8 @@ class GraphvizController < ApplicationController
   def handle_graphviz_setup
     # in 'graphviz_config'
     params[:program] ||= "neato"
+    params[:start_date] ||=(session[:last_load_date] - 5.years).to_date.to_s(:justdate)
+    params[:end_date] ||=session[:last_load_date].to_s(:justdate)
     set_graphviz_defaults(params)
     # in the helper
     handle_graphviz_request()
@@ -140,6 +149,8 @@ class GraphvizController < ApplicationController
   
   def show_core
     params[:program] ||= "neato"
+    params[:start_date] ||=(session[:last_load_date] - 5.years).to_date.to_s(:justdate)
+    params[:end_date] ||=session[:last_load_date].to_s(:justdate)
     set_graphviz_defaults(params)
     
     params[:format] =  nil

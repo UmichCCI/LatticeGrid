@@ -78,12 +78,12 @@ module GraphvizHelper
     end
   end
 
-	def graphviz_remote_function(div_id, program_name,format_name, distance_name, stringency_name, id_name, analysis_name, include_orphans_name)
+	def graphviz_remote_function(div_id, program_name,format_name, distance_name, stringency_name, id_name, analysis_name, include_orphans_name, start_date_name, end_date_name)
     remote_function( :update =>  {:success => div_id, :failure => 'flash_notice'},
             :before => "new Element.update('#{div_id}','<p>Loading graph ...</p>')",
             :complete => "new Effect.Highlight('#{div_id}');",
             :url => restless_graphviz_path(),
-            :with => "'program='+encodeURIComponent( $('"+program_name.to_s+"').getValue())+'&format='+encodeURIComponent( $('"+format_name.to_s+"').getValue())+'&distance='+encodeURIComponent( $('"+distance_name.to_s+"').getValue())+'&stringency='+encodeURIComponent( $('"+stringency_name.to_s+"').getValue())+'&id='+encodeURIComponent( $('"+id_name.to_s+"').getValue())+'&analysis='+encodeURIComponent( $('"+analysis_name.to_s+"').getValue())+'&include_orphans='+encodeURIComponent( $('"+include_orphans_name.to_s+"').getValue())",
+            :with => "'program='+encodeURIComponent( $('"+program_name.to_s+"').getValue())+'&format='+encodeURIComponent( $('"+format_name.to_s+"').getValue())+'&distance='+encodeURIComponent( $('"+distance_name.to_s+"').getValue())+'&stringency='+encodeURIComponent( $('"+stringency_name.to_s+"').getValue())+'&id='+encodeURIComponent( $('"+id_name.to_s+"').getValue())+'&analysis='+encodeURIComponent( $('"+analysis_name.to_s+"').getValue())+'&include_orphans='+encodeURIComponent( $('"+include_orphans_name.to_s+"').getValue())+'&start_date='+encodeURIComponent( $('"+start_date_name.to_s+"').getValue())+'&end_date='+encodeURIComponent( $('"+end_date_name.to_s+"').getValue())",
             :method => :get)
 	end
 
@@ -104,19 +104,19 @@ module GraphvizHelper
      # params = set_graphviz_defaults(params)
      graph_dir = "public/#{@graph_path}"
      if ! graph_exists?( graph_dir, params[:program], @output_format )
-       graph = build_graph(params[:analysis],params[:program],params[:id], params[:distance], params[:stringency], params[:include_orphans])
+       graph = build_graph(params[:analysis],params[:program],params[:id], params[:distance], params[:stringency], params[:include_orphans], params[:start_date], params[:end_date])
        graph_output( graph, graph_dir, params[:program], @output_format )
      end
    end
    
-   def build_graph(analysis, program, id, distance, stringency, include_orphans)
-     # logger.warn "analysis=#{analysis}, program=#{program}, username=#{id}, distance=#{distance}, stringency=#{stringency}, include_orphans=#{include_orphans}"
+   def build_graph(analysis, program, id, distance, stringency, include_orphans, start_date, end_date)
+     # logger.warn "analysis=#{analysis}, program=#{program}, username=#{id}, distance=#{distance}, stringency=#{stringency}, include_orphans=#{include_orphans}, start_date=#{start_date}, end_date=#{end_date}"
      @graph_edges=[]
      #include_orphans = "0" if include_orphans.to_s != "1"
      graph = graph_new(program)
 
      graph = case analysis
-           when "member"      :  build_member_graph( graph, program, id, distance, stringency, include_orphans)
+           when "member"      :  build_member_graph( graph, program, id, distance, stringency, include_orphans, start_date, end_date)
            when "member_mesh" :  build_member_mesh_graph( graph, program, id, distance, stringency, include_orphans)
            when "member_awards" :  build_member_awards_graph( graph, program, id, distance, stringency, include_orphans)
            when "mesh"        :  build_mesh_graph( graph, program, id, distance, stringency, include_orphans)
@@ -128,19 +128,20 @@ module GraphvizHelper
      graph
    end
 
-   def build_member_graph(graph, program, id, distance, stringency, include_orphans)
+   def build_member_graph(graph, program, id, distance, stringency, include_orphans, start_date, end_date)
      @investigator = Investigator.find_by_username(id)
      if @investigator.nil?
        graph = graph_no_data(graph, "Investigator id #{id} was not found")
      else
        graph_newroot(graph, @investigator)
-       co_authors = @investigator.co_authors.shared_pubs(stringency)
-       graph = graph_add_nodes(program, graph, co_authors)
+       investigators = InvestigatorAbstract.investigator_shared_publication_count_by_date_range(@investigator.id, start_date, end_date)
+       graph = graph_add_investigator_nodes(program, graph, @investigator, investigators, stringency)
        if distance != "1"
          opts = {}
          opts[:fillcolor] = LatticeGridHelper.second_degree_other_fill_color # super pale green
-         co_authors.each do |co_author|
-            graph = graph_add_nodes(program, graph, co_author.colleague.co_authors.shared_pubs(stringency), false, opts)
+         investigators.each do |inv|
+           coauths = InvestigatorAbstract.investigator_shared_publication_count_by_date_range(inv.id, start_date, end_date)
+           graph = graph_add_investigator_nodes(program, graph, inv, coauths, stringency, false, opts)
          end
        end
      end
@@ -177,7 +178,7 @@ module GraphvizHelper
        opts = {}
        opts[:fillcolor] = LatticeGridHelper.second_degree_other_fill_color # super pale green
        awards.each do |award|
-          graph = graph_add_investigator_nodes(program, graph, award, award.investigators, false, opts)
+          graph = graph_add_award_investigator_nodes(program, graph, award, award.investigators, false, opts)
        end
      end
      graph

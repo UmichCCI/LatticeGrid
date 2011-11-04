@@ -38,15 +38,19 @@ def BuildPISearch(pi, full_first_name=true)
   result = build_pi_search_string(pi, full_first_name)
   result = result + '[auth]' unless result =~ /\[auth|\(/
   if limit_to_institution(pi) then
-    result = LimitSearchToInstitution(result)
+    result = LimitSearchToInstitution(result, pi)
   end
   result
 end
 
-def LimitSearchToInstitution(term)
+def LimitSearchToInstitution(term, pi)
   # temporarily reverse logic limit by institution
   # term + " NOT " + LatticeGridHelper.institutional_limit_search_string()
-  "(" + term + ") AND (" + LatticeGridHelper.institutional_limit_search_string() + ")"
+  if LatticeGridHelper.build_institution_search_string_from_department?
+    "(" + term + ") AND (" + BuildAffiliationLimitString(pi.home_department_name) +")"
+  else
+    "(" + term + ") AND (" + LatticeGridHelper.institutional_limit_search_string() + ")"
+  end
 end
 
 def BuildSearchOptions (number_years, max_num_records=500)
@@ -56,6 +60,17 @@ def BuildSearchOptions (number_years, max_num_records=500)
      'reldate' => (365*number_years).to_i,
      'retmax' => max_num_records,
   }
+end
+
+def BuildAffiliationLimitString(str)
+  return "" if str.blank?
+  str_arr = str.split(" ")
+  out_arr = []
+  str_arr.each do |txt|
+    next if txt.length < 3
+    out_arr << txt+"[affil]"
+  end
+  out_arr.join(" AND ")
 end
 
 
@@ -77,7 +92,7 @@ def FindPubMedIDs (all_investigators, options, number_years, debug=false, smart_
         if entries.length < 1 && smart_filters && ! LatticeGridHelper.global_pubmed_search_full_first_name?() then
           keywords = BuildPISearch(investigator,false)
         elsif entries.length > (LatticeGridHelper.expected_max_pubs_per_year*number_years) && smart_filters && repeatCnt < 3 && ! limit_pubmed_search_to_institution() then
-          keywords = LimitSearchToInstitution(keywords)
+          keywords = LimitSearchToInstitution(keywords, investigator)
         else
           perform_esearch=false
         end
@@ -155,7 +170,7 @@ def GetPubsForInvestigators(investigators)
   return investigators
 end
 
-def InsertInvestigatorPublication(abstract_id, investigator_id, is_first_author=false, is_last_author=false, is_valid=false)
+def InsertInvestigatorPublication(abstract_id, investigator_id, publication_date, is_first_author=false, is_last_author=false, is_valid=false)
   puts "InsertInvestigatorPublication: this shouldn't happen - abstract_id was nil" if abstract_id.nil?
   return if abstract_id.nil?
   puts "InsertInvestigatorPublication: this shouldn't happen - investigator_id was nil" if investigator_id.nil?
@@ -170,7 +185,8 @@ def InsertInvestigatorPublication(abstract_id, investigator_id, is_first_author=
          :is_first_author => is_first_author,
          :is_last_author  => is_last_author,
          :is_valid        => is_valid,
-         :reviewed_ip     => "inserted from pubmed"
+         :reviewed_ip     => "inserted from pubmed",
+         :publication_date => publication_date
        )
       rescue ActiveRecord::RecordInvalid
        if thePIPub.nil? then # something bad happened
@@ -195,14 +211,31 @@ end
 def UpdateInvestigatorCitationInformation(investigator)
   investigator.num_intraunit_collaborators_last_five_years=Investigator.intramural_collaborators_since_date_cnt(investigator.id)
   investigator.num_extraunit_collaborators_last_five_years=Investigator.other_collaborators_since_date_cnt(investigator.id)
-  investigator.total_pubs_last_five_years=investigator.abstract_last_five_years_count()
+  investigator.total_publications_last_five_years=investigator.abstract_last_five_years_count()
   investigator.num_first_pubs_last_five_years=investigator.first_author_publications_since_date_cnt()
   investigator.num_last_pubs_last_five_years=investigator.last_author_publications_since_date_cnt()
   investigator.num_intraunit_collaborators=Investigator.intramural_collaborators_cnt(investigator.id)
   investigator.num_extraunit_collaborators=Investigator.other_collaborators_cnt(investigator.id)
-  investigator.total_pubs=investigator.abstracts.length
+  investigator.total_publications=investigator.abstracts.length
   investigator.num_first_pubs=investigator.first_author_publications_cnt()
   investigator.num_last_pubs=investigator.last_author_publications_cnt()
+  investigator.home_department_name=investigator.home_department.name if !investigator.home_department.blank?
+
+  investigator.total_studies = investigator.investigator_studies.length
+  collabs = investigator.investigator_studies.map{|inv| inv.study.investigators.map(&:id)}.flatten.uniq
+  investigator.total_studies_collaborators = collabs.length - 1
+   
+  investigator.total_pi_studies = investigator.investigator_pi_studies.length
+  collabs = investigator.investigator_pi_studies.map{|inv| inv.study.investigators.map(&:id)}.flatten.uniq
+  investigator.total_pi_studies_collaborators = collabs.length - 1
+  
+  investigator.total_awards = investigator.investigator_proposals.length
+  collabs = investigator.investigator_proposals.map{|inv| inv.proposal.investigators.map(&:id)}.flatten.uniq
+  investigator.total_awards_collaborators = collabs.length - 1
+   
+  investigator.total_pi_awards = investigator.investigator_pi_proposals.length
+  collabs = investigator.investigator_pi_proposals.map{|inv| inv.proposal.investigators.map(&:id)}.flatten.uniq
+  investigator.total_pi_awards_collaborators = collabs.length - 1
   investigator.save!
 end
 
@@ -230,27 +263,21 @@ def UpdateInvestigatorPublication(abstract_id, investigator_id, is_first_author,
    thePIPub.id
 end
 
-
-def AddInvestigatorsToCitation(abstract_id, investigator_ids, first_author_id, last_author_id)
-  puts "AddInvestigatorToCitation: this shouldn't happen - abstract_id was nil" if abstract_id.nil?
-  return if abstract_id.nil?
-  puts "AddInvestigatorToCitation: this shouldn't happen - investigator_ids was nil" if investigator_ids.nil?
-  return if investigator_ids.blank?
-  return if investigator_ids.length < 1
-  investigator_ids.each do |investigator_id|
-    if InvestigatorAbstract.find( :first,
-      :conditions => [" abstract_id = :abstract_id AND investigator_id = :investigator_id",
-          {:investigator_id => investigator_id, :abstract_id => abstract_id}])
-      # puts "found investigator/abstract pair"
-      if (last_author_id > 0 || first_author_id > 0) then 
-        UpdateInvestigatorRecords(abstract_id, investigator_id, !!(first_author_id == investigator_id),  !!(last_author_id == investigator_id), true)
-      end
-    else
-      puts "adding new investigator/abstract pair (investigator: #{Investigator.find(investigator_id).last_name}; abstract pubmed_id: #{Abstract.find(abstract_id).pubmed})" if LatticeGridHelper.verbose?
-      InsertInvestigatorPublication(abstract_id, investigator_id, !!(first_author_id == investigator_id),  !!(last_author_id == investigator_id), true)
-    end
+def SubtractKnownPubmedIDs(pubmed_ids)
+  novel_pubmed_ids=[]
+  start_slice = 0
+  slice_size = 500
+  while start_slice < pubmed_ids.length
+    the_ids = pubmed_ids.slice(start_slice,slice_size)
+    start_slice+=slice_size
+    found_abs = Abstract.find_all_by_pubmed_include_deleted(the_ids)
+    next if found_abs.length < 1
+    found_ids = found_abs.map(&:pubmed)
+    novel_ids = the_ids - found_ids
+    novel_pubmed_ids += novel_ids unless novel_ids.blank?
   end
-end
+  return novel_pubmed_ids
+end 
 
 # fetch pubmed record data based on array of pubmed_ids
 def FetchPublicationData(pubmed_ids)
