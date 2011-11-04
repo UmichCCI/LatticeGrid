@@ -22,7 +22,7 @@ config.action_mailer.raise_delivery_errors = false
 
 
 config.after_initialize do
-  Aker.configure do
+#  Aker.configure do
     # The authentication protocol to use for interactive access.
     # `:form` is the default.
     # ui_mode :cas
@@ -33,14 +33,14 @@ config.after_initialize do
 
     # The portal to which this application belongs.  Optional.
     # portal :LatticeGrid
-    if RAILS_ROOT =~ /Users/ 
-      login_config = File.join(RAILS_ROOT, %w(config logins development.yml))
-      authority Aker::Authorities::Static.from_file(login_config)
-      puts "loading local static aker file"
-    else
-      authorities :ldap
-      central '/etc/nubic/bcsec-local.yml'
-    end
-  end
+#    if RAILS_ROOT =~ /Users/ 
+#      login_config = File.join(RAILS_ROOT, %w(config logins development.yml))
+#      authority Aker::Authorities::Static.from_file(login_config)
+#      puts "loading local static aker file"
+#    else
+#      authorities :ldap
+#      central '/etc/nubic/bcsec-local.yml'
+#    end
+#  end
 end
 

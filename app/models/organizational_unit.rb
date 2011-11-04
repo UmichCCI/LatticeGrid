@@ -168,14 +168,14 @@ def all_associatemember_faculty
       elsif affiliation_types.length == 1
         faculty = all_primary_faculty if affiliation_types.grep(/primary/i).length > 0
         faculty = all_secondary_faculty if affiliation_types.grep(/secondary/i).length > 0
-        faculty = all_members if affiliation_types.grep(/member/i).length > 0
+        faculty = all_members if affiliation_types.grep(/\bmember/i).length > 0
         faculty = all_associatemember_faculty if affiliation_types.grep(/associatemember/i).length > 0
 	puts "I am here"
       else
         faculty = []
         faculty = all_primary_faculty if affiliation_types.grep(/primary/i).length > 0
         faculty += all_secondary_faculty if affiliation_types.grep(/secondary/i).length > 0
-        faculty += all_members if affiliation_types.grep(/member/i).length > 0
+        faculty += all_members if affiliation_types.grep(/\bmember/i).length > 0
         faculty += all_associatemember_faculty if affiliation_types.grep(/associatemember/i).length > 0
         faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
       end

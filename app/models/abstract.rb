@@ -35,13 +35,13 @@ class Abstract < ActiveRecord::Base
   }
   named_scope :ccsg_abstracts_by_date, lambda { |*dates|
       {:conditions => 
-          ['is_cancer = true and (publication_date between :start_date and :end_date)',
+          ['is_cancer = true and (abstracts.publication_date between :start_date and :end_date)',
             {:start_date => dates.first, :end_date => dates.last } ] }
     }
   named_scope :hightimpactccsg_abstracts_by_date, lambda { |*dates|
   {:joins => "INNER JOIN journals on lower(journals.journal_abbreviation) = lower(abstracts.journal_abbreviation) ",
       :conditions => 
-          ['is_cancer = true and (publication_date between :start_date and :end_date) and journals.journal_name in (:journalnames)',
+          ['is_cancer = true and (abstracts.publication_date between :start_date and :end_date) and journals.journal_name in (:journalnames)',
 	    {:journalnames=>["UM_HIGHIMPACT"] , 
             :start_date => dates.first, :end_date => dates.last } ] }
 }

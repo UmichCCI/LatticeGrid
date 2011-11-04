@@ -27,10 +27,10 @@ config.action_view.cache_template_loading            = true
 # Enable threaded mode
 # config.threadsafe!
 config.after_initialize do
-  Aker.configure do
-    ui_mode :form
-    api_mode :http_basic
-    authorities :ldap
-    central '/etc/nubic/bcsec-prod.yml'
-  end
+#  Aker.configure do
+#    ui_mode :form
+#    api_mode :http_basic
+#    authorities :ldap
+#    central '/etc/nubic/bcsec-prod.yml'
+#  end
 end
