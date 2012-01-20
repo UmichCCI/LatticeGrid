@@ -1,0 +1,3 @@
+last_name	first_name	middle_name	degrees	rank	department	program_num	program	pubmed_search_name	pubmed_limit_to_institution	email	username	employee_id	home_department_id	person_created	person_update	program_update	appointment_update	pubmed_alias_update
+Stoffel	Ellie	M	MD	Professor	Int Med-Gastroenterology	14	Biomedical Prevention		f	estoffel@umich.edu	estoffel	61343206	14	10/25/2011 11:10:49 AM	10/25/2011 11:14:20 AM	10/25/2011 11:12:00 AM	10/25/2011 11:12:38 AM	
+Stoffel	Ellie	M	MD	Professor	Int Med-Gastroenterology	01	Cancer Genetics		f	estoffel@umich.edu	estoffel	61343206	14	10/25/2011 11:10:49 AM	10/25/2011 11:14:20 AM	10/25/2011 11:12:00 AM	10/25/2011 11:12:38 AM	

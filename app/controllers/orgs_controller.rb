@@ -355,6 +355,49 @@ class OrgsController < ApplicationController
     end
   end
 
+  def highimpactabstracts_during_period
+    # for printing
+    handle_start_and_end_date
+    @unit = OrganizationalUnit.find(params[:id])
+    @faculty = @unit.get_faculty_by_types(params[:affiliation_types])
+    @exclude_letters = ! params[:exclude_letters].blank?
+    @faculty_affiliation_types = params[:affiliation_types]
+    @abstracts = @unit.highimpactall_ccsg_publications_by_date(@faculty, params[:start_date], params[:end_date], @exclude_letters )
+    @investigators_in_unit = @faculty.collect(&:id)
+
+    @do_pagination = "0"
+    @heading = "#{@abstracts.length} publications. High Impact Publication Listing  "
+    @heading = @heading + " from #{@start_date} " if !params[:start_date].blank?
+    @heading = @heading + " to #{@end_date}" if !params[:end_date].blank?
+    @include_mesh = false
+    @include_graph_link = false
+    @show_paginator = false
+    @include_investigators=true 
+    @include_pubmed_id = true 
+    @include_collab_marker = true
+    @bold_members = true
+    @include_impact_factor = true
+    @simple_links = true
+
+    respond_to do |format|
+      format.html { render :layout => 'printable', :controller=> :orgs, :action => :show }# show.html.erb
+      format.xml  { render :xml => @abstracts }
+      format.pdf do
+         render :pdf => "Abstracts for " + @unit.name, 
+            :stylesheets => "pdf", 
+            :template => "orgs/show.html.erb",
+            :layout => "pdf"
+      end
+      format.xls  { send_data(render(:template => 'orgs/show.html', :layout => "excel"),
+        :filename => "Abstracts for #{@unit.name}.xls",
+        :type => 'application/vnd.ms-excel',
+        :disposition => 'attachment') }
+      format.doc  { send_data(render(:template => 'orgs/show.html', :layout => "excel"),
+        :filename => "Abstracts for #{@unit.name}.doc",
+        :type => 'application/msword',
+        :disposition => 'attachment') }
+    end
+  end
   def investigator_abstracts_during_period
     # for printing
     handle_start_and_end_date

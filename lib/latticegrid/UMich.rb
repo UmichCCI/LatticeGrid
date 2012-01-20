@@ -105,12 +105,14 @@ end
 # build LatticeGridHelper.institutional_limit_search_string to identify all the publications at your institution 
 
 def LatticeGridHelper.institutional_limit_search_string 
-  '((mott[ad]) AND (hospital[ad])) OR (University of Michigan[ad])'
+ # '((mott[ad]) AND (hospital[ad])) OR (University of Michigan[ad])'
+  '(University of Michigan[ad])'
 end
 
 # limit searches to include the institutional_limit_search_string
 def LatticeGridHelper.global_limit_pubmed_search_to_institution?
-  true
+#  true
+ false 
 end
 
 def LatticeGridHelper.do_ldap?

@@ -34,18 +34,58 @@ module Bio
 
     # DP   - Publication Date
     #   The date the article was published. Year MON day
-    def publication_date
-     pubdate=@pubmed['DP'].strip.split(" ")
-     if pubdate.length > 2
-       pubdate[2].to_s + '-' + pubdate[1].to_s + '-' + pubdate[0].to_s
-     elsif pubdate.length == 2
-       '01-'+ pubdate[1]+'-'+ pubdate[0]
-     elsif pubdate.length == 1
-       '01-JAN-'+ pubdate[0]
-     else
-       nil
-     end
+    #def publication_date
+     #pubdate=@pubmed['DP'].strip.split(" ")
+     #if pubdate.length > 2
+      # pubdate[2].to_s + '-' + pubdate[1].to_s + '-' + pubdate[0].to_s
+     #elsif pubdate.length == 2
+      # '01-'+ pubdate[1]+'-'+ pubdate[0]
+     #elsif pubdate.length == 1
+      # '01-JAN-'+ pubdate[0]
+     #else
+     #  nil
+     #end
+    #end
+def publication_date
+    return nil if @pubmed['DP'].blank?
+    if @pubmed['DP'].strip =~ /([0-9][0-9][0-9][0-9] [a-zA-Z]+)-([0-9][0-9][0-9][0-9] [a-zA-Z]+)/i
+      @pubmed['DP'] =  @pubmed['DP'].strip.split("-")[1]
     end
+    if @pubmed['DP'].strip =~ /([0-9][0-9][0-9][0-9]) ([a-zA-Z]+ [0-9]+)-([a-zA-Z]+ [0-9]+)/i
+      @pubmed['DP'] =  @pubmed['DP'].strip.gsub(/([0-9][0-9][0-9][0-9]) ([a-zA-Z]+ [0-9]+)-([a-zA-Z]+ [0-9]+)/i, '\1 \3')
+    end
+    pubdate=@pubmed['DP'].strip.split(" ")
+    year_range = pubdate[0].split("-")
+    if year_range.length > 1
+      pubdate[0] = year_range[1]
+    end
+    if pubdate.length > 1
+      month_range = pubdate[1].split("-")
+      if month_range.length > 1
+        pubdate[1] = month_range[1]
+      end
+      pubdate[1] = case pubdate[1] 
+        when /spring/i then 'Mar'
+        when /summer/i then 'Jun'
+        when /fall|autumn/i then 'Sep'
+        when /winter/i then 'Dec'
+        else pubdate[1]
+      end
+    end
+    if pubdate.length > 2
+      day_range = pubdate[2].split("-")
+      if day_range.length > 1
+        pubdate[2] = day_range[1]
+      end
+      pubdate[2].to_s + '-' + pubdate[1].to_s + '-' + pubdate[0].to_s
+    elsif pubdate.length == 2
+      '01-'+ pubdate[1]+'-'+ pubdate[0]
+    elsif pubdate.length == 1
+      '01-JAN-'+ pubdate[0]
+    else
+      nil
+    end
+  end
 
 
     # PST   - Publication Status

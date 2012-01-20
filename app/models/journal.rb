@@ -26,10 +26,11 @@ class Journal < ActiveRecord::Base
     # sortby should be one of impact_factor DESC, count_all DESC, journals.journal_abbreviation
     find(:all,
       :select => "id, score_year, impact_factor, journal_abbreviation, issn, total_cites, impact_factor_five_year, immediacy_index, total_articles, eigenfactor_score, article_influence_score",
-      :conditions => ['impact_factor >= :impact', 
-            {:impact => impact}],
-      :order => "#{sortby}" )
+#      :conditions => ['impact_factor >= :impact', 
+ #           {:impact => impact}],
+ #     :order => "#{sortby}" )
     # score_year DESC, shows if more than one score year is used
+      :conditions => ['journal_name in (:journalnames)', {:journalnames=>["UM_HIGHIMPACT"]}]) 
   end
 
   def self.journal_publications( years, sortby )
