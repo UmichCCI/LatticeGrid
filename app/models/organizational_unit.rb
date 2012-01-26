@@ -10,6 +10,11 @@ class OrganizationalUnit < ActiveRecord::Base
   has_many :secondary_appointments,
       :class_name => "InvestigatorAppointment",
       :conditions => ["investigator_appointments.type = 'Secondary' and (investigator_appointments.end_date is null or investigator_appointments.end_date >= :today)", {:today => Date.today }]
+
+  has_many :associatememberships,
+      :class_name => "InvestigatorAppointment",
+      :conditions => ["investigator_appointments.type = 'associatemember' and (investigator_appointments.end_date is null or investigator_appointments.end_date >= :today)", {:today => Date.today }]
+
   has_many :memberships,
       :class_name => "InvestigatorAppointment",
       :conditions => ["investigator_appointments.type = 'Member' and (investigator_appointments.end_date is null or investigator_appointments.end_date >= :today)", {:today => Date.today }]
@@ -29,6 +34,11 @@ class OrganizationalUnit < ActiveRecord::Base
   has_many :secondary_faculty,  
     :source => :investigator,
     :through => :secondary_appointments
+
+  has_many :associatemembers,  
+    :source => :investigator,
+    :through => :associatememberships
+
   has_many :members,
     :source => :investigator,
     :through => :memberships
@@ -82,7 +92,12 @@ class OrganizationalUnit < ActiveRecord::Base
     end
 
     def all_secondary_faculty
+     puts "get secondary "
       self.self_and_descendants.collect(&:secondary_faculty).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+    
+def all_associatemember_faculty
+      self.self_and_descendants.collect(&:associatemembers).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
     # associated_faculty includes joint, secondary and members
@@ -95,6 +110,7 @@ class OrganizationalUnit < ActiveRecord::Base
     end
 
     def get_faculty_by_types(affiliation_types=nil, ranks=nil)
+  puts "get_faculty"
       #have not implemented rank selectors yet
       if affiliation_types.blank? or affiliation_types.length == 0
         faculty = (all_primary_faculty + all_associated_faculty).uniq
@@ -103,17 +119,22 @@ class OrganizationalUnit < ActiveRecord::Base
         faculty = all_primary_faculty if affiliation_types.grep(/primary/i).length > 0
         faculty = all_secondary_faculty if affiliation_types.grep(/secondary/i).length > 0
         faculty = all_members if affiliation_types.grep(/member/i).length > 0
+        faculty = all_associatemember_faculty if affiliation_types.grep(/associatemember/i).length > 0
+	puts "I am here"
       else
         faculty = []
         faculty = all_primary_faculty if affiliation_types.grep(/primary/i).length > 0
         faculty += all_secondary_faculty if affiliation_types.grep(/secondary/i).length > 0
         faculty += all_members if affiliation_types.grep(/member/i).length > 0
+        faculty += all_associatemember_faculty if affiliation_types.grep(/associatemember/i).length > 0
         faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
       end
+	puts "I am here 2"
       faculty
     end
 
     def all_faculty_publications
+	puts "all_faculty_publications"
       faculty = (all_primary_faculty + all_associated_faculty).uniq
       faculty.collect(&:abstracts).flatten.uniq
     end
