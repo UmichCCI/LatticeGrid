@@ -119,6 +119,9 @@ def LatticeGridHelper.do_ldap?
   false
 end
 
-def LatticeGridHelper.valid_member_types
-  %w(Member AssociateMember)
+def LatticeGridHelper.member_types_map
+  {
+    'Core' => Member,
+    'NonCore' => AssociateMember
+  }
 end

@@ -148,9 +148,10 @@ def CreateInvestigatorFromHash(data_row)
 	end
 end
 
-def HandleMemberType(source)
-  if source['member_type'] && LatticeGridHelper.valid_member_types.include?(source['member_type'])
-    return Object.const_get(source['member_type'])
+def HandleMemberType(data)
+  key = data['member_type']
+  if !key.blank? && LatticeGridHelper.member_types_map.has_key?(key)
+    return LatticeGridHelper.member_types_map[key]
   else
     return Member
   end
