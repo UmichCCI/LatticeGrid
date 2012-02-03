@@ -20,7 +20,7 @@
 		  <%= form.text_field(:end_date, :size => 20) %> select dates </p>
 		<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 		<ul class="noBullets">
-		  <% ["primary", "secondary", "member", "associatemember"].each do |affiliation_type| %>
+		  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
 		      <li>
 		        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 		        <%= h affiliation_type -%>
@@ -40,7 +40,7 @@
 		  <%= form.text_field(:end_date, :size => 20) %> select dates </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 				<ul class="noBullets">
-				  <% ["primary", "secondary", "member","associatemember"].each do |affiliation_type| %>
+				  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
 				      <li>
 				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 				        <%= h affiliation_type -%>
@@ -66,7 +66,7 @@
 				) %> select format </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 				<ul class="noBullets">
-				  <% ["primary", "secondary", "member","associatemember"].each do |affiliation_type| %>
+				  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
 				      <li>
 				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 				        <%= h affiliation_type -%>
@@ -104,7 +104,7 @@
 				) %> select format </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 				<ul class="noBullets">
-				  <% ["primary", "secondary", "member","associatemember"].each do |affiliation_type| %>
+				  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
 				      <li>
 				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 				        <%= h affiliation_type -%>

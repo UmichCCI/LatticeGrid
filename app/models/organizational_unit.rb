@@ -111,6 +111,18 @@ class OrganizationalUnit < ActiveRecord::Base
       self.self_and_descendants.collect{|unit| unit.members}.flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
+    def all_primary_members
+      self.self_and_descendants.collect(&:primary_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
+    def all_secondary_members
+      self.self_and_descendants.collect(&:secondary_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
+    def all_associate_members
+      self.self_and_descendants.collect(&:associate_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
     def faculty
       (self.primary_faculty + self.associated_faculty).sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
@@ -125,11 +137,6 @@ class OrganizationalUnit < ActiveRecord::Base
 
     def all_secondary_faculty
       self.self_and_descendants.collect(&:secondary_faculty).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
-    end
-    
-    # associate_faculty is a specific type encompassing PrimaryAssociate, SecondaryAssociate, etc.
-    def all_associate_faculty
-      self.self_and_descendants.collect(&:associate_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
     # associated_faculty includes joint, secondary and members
@@ -151,22 +158,26 @@ class OrganizationalUnit < ActiveRecord::Base
 
     def get_faculty_by_types(affiliation_types=nil, ranks=nil)
       #have not implemented rank selectors yet
+
+      # ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"]
+      # "AllCore" -> :memberships -> :members
+      # "PrimaryCore", "SecondaryCore" -> :primary_memberships, :secondary_memberships -> :primary_members, :secondary_members
+      # "AllNonCore" -> :associate_memberships -> :associate_members
+
       if affiliation_types.blank? or affiliation_types.length == 0
-        faculty = (all_primary_faculty + all_associated_faculty).uniq
-        faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
-      elsif affiliation_types.length == 1
-        faculty = all_primary_faculty if affiliation_types.grep(/primary/i).length > 0
-        faculty = all_secondary_faculty if affiliation_types.grep(/secondary/i).length > 0
-        faculty = all_members if affiliation_types.grep(/\bmember/i).length > 0
-        faculty = all_associate_faculty if affiliation_types.grep(/associatemember/i).length > 0
+        faculty = all_members
       else
         faculty = []
-        faculty = all_primary_faculty if affiliation_types.grep(/primary/i).length > 0
-        faculty += all_secondary_faculty if affiliation_types.grep(/secondary/i).length > 0
-        faculty += all_members if affiliation_types.grep(/\bmember/i).length > 0
-        faculty += all_associate_faculty if affiliation_types.grep(/associatemember/i).length > 0
-        faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+        faculty += all_primary_members if affiliation_types.include? 'PrimaryCore'
+        faculty += all_secondary_members if affiliation_types.include? 'SecondaryCore'
+        faculty += all_members if affiliation_types.include? 'AllCore'
+        faculty += all_associate_members if affiliation_types.include? 'AllNonCore'
+
+        if affiliation_types.length > 1
+          faculty = faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+        end
       end
+
       faculty
     end
 

@@ -4,7 +4,7 @@
 
 <% hasPrimary = false %>
 <% for unit in @units %>
-	<% hasPrimary = true if unit.primary_faculty.length > 0 %>
+	<% hasPrimary = true if unit.primary_members.length > 0 %>
 <% end %>
 <% multipleUnits = false %>
 <% unitType = "organizational unit" %>
@@ -62,7 +62,7 @@ The following is a list of the total publications, number of publications with i
 </tr>
 
 <% for unit in @units %>
-	<% if unit.primary_faculty.length > 0 or unit.associated_faculty.length > 0 then %>
+	<% if unit.primary_members.length > 0 or unit.associated_faculty.length > 0 then %>
 	<tr valign="bottom" colspan="3">
 		<td>
 			<%= unit.name %>
@@ -74,7 +74,7 @@ The following is a list of the total publications, number of publications with i
 		<% end -%>
 		<% if hasPrimary %>
 		<td class="list-title-center">
-			<%= unit.primary_faculty.length %>
+			<%= unit.primary_members.length %>
 		</td>
 		<% end -%>
 		<td class="list-title-center">
