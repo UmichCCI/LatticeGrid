@@ -15,20 +15,24 @@
 The following is a list of the total publications, number of publications with intra-<%= multipleUnits ? "unit" : unitType.downcase -%> sharing, and inter-<%= multipleUnits ? "unit" : unitType.downcase -%> sharing, broken down by <%= multipleUnits ? "organizational unit" : unitType  -%>.
 <% if LatticeGridHelper.show_cancer_related_checkbox? %>The publication statistics only include publications that are deemed to be "cancer relevant" according to the criteria of the NCI and the judgement of the coordinator's office. <% end %><br/>
 
-<% if ! @faculty_affiliation_types.blank? %>
-<p>Only faculty with <%= @faculty_affiliation_types.split(",").join(" or ") %> appointments are included in this list.</p>
-<% end %>
+<%= affiliation_filter_string(@faculty_affiliation_types) %>
 
 <% if @exclude_letters %>
 <p>Letters, editorials, tutorials, commentaries, and reviews have been removed from this list.</p>
 <% end %>
+
+<style type="text/css">
+.stats-shading {
+	background-color: lightYellow;
+}
+</style>
 
 <div id="listing">
   
 <table cellpadding="2" cellspacing="0" width="100%" class="borderless">
 <tr valign="bottom">
 	<td class="list-title-left">&nbsp;</td>
-	<td class="list-title-left" colspan="2">Membership</td>
+	<td class="list-title-left stats-shading" colspan="2">Membership</td>
 	<td class="list-title-left" colspan="5">Statistics</td>
 </tr>
 <tr valign="bottom">
@@ -41,38 +45,40 @@ The following is a list of the total publications, number of publications with i
 	</td>
 	<% end -%>
 	<% if hasPrimary %>
-	<td class="list-title-center">
+	<td class="list-title-left stats-shading">
 		Primary Members<br/>
 	</td>
 	<% end -%>
-	<td class="list-title-center">
+	<td class="list-title-left stats-shading">
 		<% if hasPrimary %>
 		Other Members<br/>
 		<% else %>
 		Members<br/>
 		<% end %>
 	</td>
-	<td class="list-title-center">
+	<td class="list-title-left">
 		Investigators<br/>
 	</td>
-	<td class="list-title-center">
+	<td class="list-title-left">
 		Total publications<br/>
 	</td>
-	<td class="list-title-center">
+	<td class="list-title-left">
 		Per investigator <br/>
 	</td>
-	<td class="list-title-center">
+	<td class="list-title-left">
 		Intra-<%=  multipleUnits ? "unit" : unitType.downcase -%><br/>
 	</td>
-	<td class="list-title-center">
+	<td class="list-title-left">
 		Inter-<%=  multipleUnits ? "unit" : unitType.downcase -%><br/>
 	</td>
 </tr>
 
+<% primary_members = Set.new; other_members = Set.new; inv_members = Set.new; pub_set = Set.new %>
+
 <% for unit in @units %>
 	<% if unit.primary_members.length > 0 or unit.associated_faculty.length > 0 then %>
 	<tr valign="bottom">
-		<td>
+		<td style="padding-left:1em;">
 			<%= unit.name %>
 		</td>
 		<% if multipleUnits %>
@@ -81,31 +87,46 @@ The following is a list of the total publications, number of publications with i
 		</td>
 		<% end -%>
 		<% if hasPrimary %>
-		<td class="list-title-center">
-			<%= unit.get_ccsg_faculty_count(:primary, @faculty_affiliation_types) %>
+		<td class="list-title-left stats-shading">
+			<% the_members = unit.get_ccsg_members_for_column(:primary, @faculty_affiliation_types)
+			primary_members.merge the_members %>
+			<%= the_members.length %>
 		</td>
 		<% end -%>
-		<td class="list-title-center">
-			<%= unit.get_ccsg_faculty_count(:other, @faculty_affiliation_types) %>
+		<td class="list-title-left stats-shading">
+			<% the_members = unit.get_ccsg_members_for_column(:other, @faculty_affiliation_types)
+			other_members.merge the_members %>
+			<%= the_members.length %>
 		</td>
-		<td class="list-title-center">
-			<%= unit.get_ccsg_faculty_count(:total, @faculty_affiliation_types) %>
+		<td class="list-title-left">
+			<% the_members = unit.get_ccsg_members_for_column(:total, @faculty_affiliation_types)
+			inv_members.merge the_members %>
+			<%= the_members.length %>
 		</td>
-		<td class="list-title-center">
-			<%= unit.publications.length %>
+		<td class="list-title-left">
+			<% the_pubs = unit.publications
+			pub_set.merge the_pubs %>
+			<%= the_pubs.length %>
 		</td>
-		<td class="list-title-center">
-			<%= ((unit.publications.length * 10 / unit.get_ccsg_faculty_count(:total, @faculty_affiliation_types)).to_f / 10)  %>
+		<td class="list-title-left">
+			<%= ((unit.publications.length * 10 / unit.get_ccsg_members_for_column(:total, @faculty_affiliation_types).length).to_f / 10) %>
 		</td>
-		<td class="list-title-center">
+		<td class="list-title-left">
 			<%= (unit.pi_intra_abstracts.length) %> (<%= unit.publications.length > 0 ? (100*(unit.pi_intra_abstracts.length)/unit.publications.length) : 0 %>%)<br/>
 		</td>
-		<td class="list-title-center">
+		<td class="list-title-left">
 			<%= unit.pi_inter_abstracts.length %> (<%= unit.publications.length > 0 ? (100*unit.pi_inter_abstracts.length/unit.publications.length) : 0 %>%) <br/>
 		</td>
 	</tr>
 	<% end %>
 <% end %>
+<tr valign="bottom" style="border-top: 1px solid black;">
+	<td class="list-title-left">Totals</td>
+	<td class="list-title-left stats-shading"><%= primary_members.length %></td>
+	<td class="list-title-left stats-shading"><%= other_members.length %></td>
+	<td class="list-title-left"><%= inv_members.length %></td>
+	<td class="list-title-left"><%= pub_set.length %></td>
+	<td colspan="3">&nbsp;</td>
 </table>
 <br/>
 

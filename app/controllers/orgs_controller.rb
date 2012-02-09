@@ -266,6 +266,7 @@ class OrgsController < ApplicationController
     @exclude_letters = ! params[:exclude_letters].blank?
     @units = @head_node.children.sort_by(&:abbreviation)
     @faculty_affiliation_types = params[:affiliation_types].split(' ')
+    @faculty_affiliation_types = CcsgHelper.CCSGDefault if @faculty_affiliation_types.blank?
     @units.each do |unit|
       unit["pi_intra_abstracts"] = Array.new
       unit["pi_inter_abstracts"] = Array.new

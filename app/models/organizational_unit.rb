@@ -172,7 +172,7 @@ class OrganizationalUnit < ActiveRecord::Base
       (all_primary_faculty + all_associated_faculty).sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
-    def get_ccsg_faculty_count(column, codes)
+    def get_ccsg_members_for_column(column, codes)
       logger.debug "Running get_faculty_count for column #{column} and codes #{codes.inspect}."
 
       case column
@@ -191,7 +191,7 @@ class OrganizationalUnit < ActiveRecord::Base
 
       logger.debug "Passing codes #{codes.inspect}."
 
-      get_faculty_by_types(codes).length
+      get_faculty_by_types(codes)
     end
 
     def get_faculty_by_types(affiliation_types=nil, ranks=nil)
