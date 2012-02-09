@@ -115,8 +115,24 @@ class OrganizationalUnit < ActiveRecord::Base
       self.self_and_descendants.collect(&:primary_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
+    def all_primary_associate_members
+      self.self_and_descendants.collect(&:primary_associate_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
     def all_secondary_members
       self.self_and_descendants.collect(&:secondary_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
+    def all_secondary_associate_members
+      self.self_and_descendants.collect(&:secondary_associate_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
+    def all_tertiary_members
+      self.self_and_descendants.collect(&:tertiary_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+    end
+
+    def all_tertiary_associate_members
+      self.self_and_descendants.collect(&:tertiary_associate_members).flatten.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
     def all_associate_members
@@ -156,26 +172,58 @@ class OrganizationalUnit < ActiveRecord::Base
       (all_primary_faculty + all_associated_faculty).sort {|x,y| x.sort_name <=> y.sort_name }.uniq
     end
 
+    def get_ccsg_faculty_count(column, codes)
+      logger.debug "Running get_faculty_count for column #{column} and codes #{codes.inspect}."
+
+      case column
+      when :primary
+        codes -= ['SecondaryTertiary']
+      when :other
+        codes -= ['Primary']
+        codes += ['SecondaryTertiary']
+      when :total
+        # Keep the codes the same.
+      else
+        raise "Unknown column type #{column}."
+      end
+
+      codes.uniq!
+
+      logger.debug "Passing codes #{codes.inspect}."
+
+      get_faculty_by_types(codes).length
+    end
+
     def get_faculty_by_types(affiliation_types=nil, ranks=nil)
       #have not implemented rank selectors yet
 
-      # ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"]
-      # "AllCore" -> :memberships -> :members
-      # "PrimaryCore", "SecondaryCore" -> :primary_memberships, :secondary_memberships -> :primary_members, :secondary_members
-      # "AllNonCore" -> :associate_memberships -> :associate_members
+      # Possible codes:
+      # CM, AM, P, ST
+      # Calculates an intersection?
 
       if affiliation_types.blank? or affiliation_types.length == 0
-        faculty = all_members
+        # Should never happen.
+        raise "Unexpected: empty affiliation_types in get_faculty_by_types."
       else
         faculty = []
-        faculty += all_primary_members if affiliation_types.include? 'PrimaryCore'
-        faculty += all_secondary_members if affiliation_types.include? 'SecondaryCore'
-        faculty += all_members if affiliation_types.include? 'AllCore'
-        faculty += all_associate_members if affiliation_types.include? 'AllNonCore'
 
-        if affiliation_types.length > 1
-          faculty = faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
+        if affiliation_types.include? 'CoreMember'
+          faculty += all_primary_members if affiliation_types.include? 'Primary'
+          if affiliation_types.include? 'SecondaryTertiary'
+            faculty += all_secondary_members
+            faculty += all_tertiary_members
+          end
         end
+
+        if affiliation_types.include? 'AssociateMember'
+          faculty += all_primary_associate_members if affiliation_types.include? 'Primary'
+          if affiliation_types.include? 'SecondaryTertiary'
+            faculty += all_secondary_associate_members
+            faculty += all_tertiary_associate_members
+          end
+        end
+
+        faculty = faculty.sort {|x,y| x.sort_name <=> y.sort_name }.uniq
       end
 
       faculty

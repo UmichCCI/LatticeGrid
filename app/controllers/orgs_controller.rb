@@ -265,11 +265,11 @@ class OrgsController < ApplicationController
     @heading = "Publication Statistics by Org from #{params[:start_date]} to #{params[:end_date]} "
     @exclude_letters = ! params[:exclude_letters].blank?
     @units = @head_node.children.sort_by(&:abbreviation)
-    @faculty_affiliation_types = params[:affiliation_types]
+    @faculty_affiliation_types = params[:affiliation_types].split(' ')
     @units.each do |unit|
       unit["pi_intra_abstracts"] = Array.new
       unit["pi_inter_abstracts"] = Array.new
-      unit_faculty = unit.get_faculty_by_types(params[:affiliation_types])
+      unit_faculty = unit.get_faculty_by_types(@faculty_affiliation_types)
       unit_pis = unit_faculty.map(&:id)
       unit["publications"]=Abstract.all_ccsg_publications_by_date( unit_pis, params[:start_date], params[:end_date], @exclude_letters )
       unit.publications.each do |abstract| 

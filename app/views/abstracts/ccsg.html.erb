@@ -1,3 +1,4 @@
+<%# Note: To change the checkbox options, look in ccsg_helper.rb. %>
 
 <div id="admin">
 
@@ -18,15 +19,9 @@
 		<p>Produce publication statistics for each unit based on articles published between the following dates. Please note that this report can take several minutes to generate! (roughly one minute per year analyzed. Not bad if you think about it in those terms!) However, excluding reviews and editorials will slow down the statistics considerably.</p>
 		  <p><%= form.text_field(:start_date, :size => 20) %> to
 		  <%= form.text_field(:end_date, :size => 20) %> select dates </p>
-		<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
-		<ul class="noBullets">
-		  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
-		      <li>
-		        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
-		        <%= h affiliation_type -%>
-		      </li>
-		  <% end %>
-		</ul>
+		<p>Limit faculty with those with the checked appointment types (none selected is the same as all):</p>
+		<%# Note: To change the checkbox options, look in ccsg_helper.rb. %>
+		<%= affiliation_types_list('period_stats') %>
 	   <p><%= check_box_tag 'exclude_letters', '1' -%> Exclude Reviews, Editorials, Letters, and Biographies</p>
 		  <%= submit_tag 'Generate Stats for dates' %>
 		<% end %> 
@@ -40,7 +35,7 @@
 		  <%= form.text_field(:end_date, :size => 20) %> select dates </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 				<ul class="noBullets">
-				  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
+				  <% ["Core Member (Primary)", "Core Member (All)", "Members (Primary)", "Members (All)"].each do |affiliation_type| %>
 				      <li>
 				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 				        <%= h affiliation_type -%>
@@ -66,7 +61,7 @@
 				) %> select format </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 				<ul class="noBullets">
-				  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
+				  <% ["Core Member (Primary)", "Core Member (All)", "Members (Primary)", "Members (All)"].each do |affiliation_type| %>
 				      <li>
 				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 				        <%= h affiliation_type -%>
@@ -104,7 +99,7 @@
 				) %> select format </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
 				<ul class="noBullets">
-				  <% ["PrimaryCore", "SecondaryCore", "AllCore", "AllNonCore"].each do |affiliation_type| %>
+				  <% ["Core Member (Primary)", "Core Member (All)", "Members (Primary)", "Members (All)"].each do |affiliation_type| %>
 				      <li>
 				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
 				        <%= h affiliation_type -%>
