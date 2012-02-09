@@ -1,12 +1,12 @@
 module CcsgHelper
 
   CCSGOptions = [
-    ["Core Members (Primary)", "CoreMember Primary"],
-    ["Core Members (All)", "CoreMember Primary SecondaryTertiary"],
-    ["Members (Primary)", "CoreMember AssociateMember Primary"],
-    ["Members (All)", "CoreMember AssociateMember Primary SecondaryTertiary"]
+    ["Core Members (Primary Appointments)", "CoreMember Primary"],
+    ["Core Members (All Appointments)", "CoreMember Primary SecondaryTertiary"],
+    ["All Members (Primary Appointments)", "CoreMember AssociateMember Primary"],
+    ["All Members (All Appointments)", "CoreMember AssociateMember Primary SecondaryTertiary"]
   ]
-  CCSGDefault = 'Core Members (Primary)'
+  CCSGDefault = "Core Members (Primary Appointments)"
 
 
   def affiliation_types_list(prefix='')
