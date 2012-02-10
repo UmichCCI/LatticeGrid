@@ -53,14 +53,7 @@
 				options_for_select([["HTML","html"], ["XML", "xml"],["PDF", "pdf"],["Excel", "xls"], ["Word", "doc"]], [params[:format]])  
 				) %> select format </p>
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):
-				<ul class="noBullets">
-				  <% ["Core Member (Primary)", "Core Member (All)", "Members (Primary)", "Members (All)"].each do |affiliation_type| %>
-				      <li>
-				        <%= check_box_tag 'affiliation_types[]', affiliation_type -%>
-				        <%= h affiliation_type -%>
-				      </li>
-				  <% end %>
-				</ul>
+				<%= affiliation_types_list('list_one_unit') %>
 	   <p><%= check_box_tag 'exclude_letters', '1' -%> Exclude Reviews, Editorials, Letters, and Biographies</p>
 	   <p><%= check_box_tag 'limit_to_first_last', '1' -%> Limit to articles with a first or last author from this unit</p>
 	   <p>Impact factor: <%= text_field_tag('impact_factor', nil, :size => 10, :maxlength => 3) %> Limit to articles with at least this impact factor (blank is no limit) </p>

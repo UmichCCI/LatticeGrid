@@ -358,8 +358,9 @@ class OrgsController < ApplicationController
     # for printing
     handle_start_and_end_date
     @unit = OrganizationalUnit.find(params[:id])
-    @faculty_affiliation_types = params[:affiliation_types]
-    @faculty = @unit.get_faculty_by_types(params[:affiliation_types])
+    @faculty_affiliation_types = (params[:affiliation_types].blank?) ?
+      CcsgHelper::CCSGDefault.split(' ') : params[:affiliation_types].split(' ')
+    @faculty = @unit.get_faculty_by_types(@faculty_affiliation_types)
     @exclude_letters = ! params[:exclude_letters].blank?
     @limit_to_first_last = ! params[:limit_to_first_last].blank?
     @impact_factor = params[:impact_factor]
