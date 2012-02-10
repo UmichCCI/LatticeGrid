@@ -6,6 +6,7 @@ module CcsgHelper
     ["All Members (Primary Appointments)", "CoreMember AssociateMember Primary"],
     ["All Members (All Appointments)", "CoreMember AssociateMember Primary SecondaryTertiary"]
   ]
+
   CCSGDefault = "CoreMember Primary"
 
 
@@ -24,6 +25,9 @@ module CcsgHelper
   end
 
   def affiliation_filter_string(typelist)
+    # Typelist should be an array of strings.
+    # I'm deliberately not checking this because it's enforced in the controller.
+
     out = '<p>'
     if typelist.include?('CoreMember') && typelist.include?('AssociateMember')
       out += 'All members (core and non-core) '
