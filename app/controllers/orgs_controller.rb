@@ -416,9 +416,10 @@ class OrgsController < ApplicationController
     # for printing
     handle_start_and_end_date
     @unit = OrganizationalUnit.find(params[:id])
-    @faculty = @unit.get_faculty_by_types(params[:affiliation_types])
+    @faculty_affiliation_types = (params[:affiliation_types].blank?) ?
+      CcsgHelper::CCSGDefault.split(' ') : params[:affiliation_types].split(' ')
+    @faculty = @unit.get_faculty_by_types(@faculty_affiliation_types)
     @exclude_letters = ! params[:exclude_letters].blank?
-    @faculty_affiliation_types = params[:affiliation_types]
     @abstracts = @unit.highimpactall_ccsg_publications_by_date(@faculty, params[:start_date], params[:end_date], @exclude_letters )
     @investigators_in_unit = @faculty.collect(&:id)
 
