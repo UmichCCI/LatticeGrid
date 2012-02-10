@@ -175,6 +175,8 @@ class OrganizationalUnit < ActiveRecord::Base
     def get_ccsg_members_for_column(column, codes)
       logger.debug "Running get_faculty_count for column #{column} and codes #{codes.inspect}."
 
+      codes = codes.split(' ') if codes.is_a? String
+
       case column
       when :primary
         codes -= ['SecondaryTertiary']
