@@ -346,9 +346,10 @@ class OrgsController < ApplicationController
   def list_abstracts_during_period_rjs
     handle_start_and_end_date
     @unit = OrganizationalUnit.find(params[:id])
-    @faculty = @unit.get_faculty_by_types(params[:affiliation_types])
+    @faculty_affiliation_types = (params[:affiliation_types].blank?) ?
+      CcsgHelper::CCSGDefault.split(' ') : params[:affiliation_types].split(' ')
+    @faculty = @unit.get_faculty_by_types(@faculty_affiliation_types)
     @exclude_letters = ! params[:exclude_letters].blank?
-    @faculty_affiliation_types = params[:affiliation_types]
     faculty_ids = @faculty.map(&:id)
     @abstracts = Abstract.all_ccsg_publications_by_date(faculty_ids, params[:start_date], params[:end_date], @exclude_letters )
   end
