@@ -25,24 +25,25 @@ module CcsgHelper
   end
 
   def affiliation_filter_string(typelist)
-    # Typelist should be an array of strings.
-    # I'm deliberately not checking this because it's enforced in the controller.
+    # Typelist should be either a string or an array of strings.
 
-    out = '<p>'
+    out = '<p style="font-weight:bold; margin-top: 6pt;">'
     if typelist.include?('CoreMember') && typelist.include?('AssociateMember')
-      out += 'All members (core and non-core) '
+      out << 'All members (core and non-core) '
     else # if typelist.include?('CoreMember')
-      out += 'Only core members '
+      out << 'Only core members '
     end
+
+    out << 'are included in this list.  '
 
     if typelist.include?('Primary') && typelist.include?('SecondaryTertiary')
-      out += ' of all appointment types (primary, secondary, and tertiary) '
+      out << 'All appointment types (primary, secondary, and tertiary) '
     else # if typelist.include?('Primary')
-      out += ' with primary appointment type '
+      out << 'Only primary appointments '
     end
 
-    out += 'are included in this list.'
-    out += '</p>'
+    out << 'are included in the statistics.'
+    out << '</p>'
     out
   end
 end
