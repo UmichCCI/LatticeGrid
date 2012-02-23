@@ -26,6 +26,7 @@ module CcsgHelper
 
   def affiliation_filter_string(typelist)
     # Typelist should be either a string or an array of strings.
+    return '' if typelist.blank?
 
     out = '<p style="font-weight:bold; margin-top: 6pt;">'
     if typelist.include?('CoreMember') && typelist.include?('AssociateMember')
