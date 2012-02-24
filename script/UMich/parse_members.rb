@@ -4,7 +4,7 @@ require "bundler/setup"
 require 'fastercsv'
 require 'set'
 
-if !ARGV[0..2].all?
+if ARGV.empty? || !ARGV[0..2].all?
 	$stderr.puts "Usage: all_members core_members output"
 	exit
 end
