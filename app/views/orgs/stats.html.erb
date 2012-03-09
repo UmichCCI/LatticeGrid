@@ -17,6 +17,10 @@ The following is a list of the total publications, number of publications with i
 
 <%= affiliation_filter_string(@faculty_affiliation_types) %>
 
+<% if @limit_to_highimpact %>
+<p style="font-weight:bold; margin-top: 6pt;">Statistics on this page are limited to high-impact publications.</p>
+<% end %>
+
 <% if @exclude_letters %>
 <p>Letters, editorials, tutorials, commentaries, and reviews have been removed from this list.</p>
 <% end %>

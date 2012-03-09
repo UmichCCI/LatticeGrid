@@ -284,12 +284,17 @@ class OrgsController < ApplicationController
     @exclude_letters = ! params[:exclude_letters].blank?
     @units = @head_node.children.sort_by(&:abbreviation)
     @faculty_affiliation_types = params[:affiliation_types]
+    @limit_to_highimpact = !params[:limit_high_impact].blank?
     @units.each do |unit|
       unit["pi_intra_abstracts"] = Array.new
       unit["pi_inter_abstracts"] = Array.new
       unit_faculty = unit.get_faculty_by_types(params[:affiliation_types])
       unit_pis = unit_faculty.map(&:id)
-      unit["publications"]=Abstract.all_ccsg_publications_by_date( unit_pis, params[:start_date], params[:end_date], @exclude_letters )
+      if @limit_to_highimpact
+        unit["publications"] = Abstract.highimpact_ccsg_publications_by_date(unit_pis, params[:start_date], params[:end_date], @exclude_letters)
+      else
+        unit["publications"] = Abstract.all_ccsg_publications_by_date(unit_pis, params[:start_date], params[:end_date], @exclude_letters)
+      end
       unit.publications.each do |abstract| 
         abstract_investigators = abstract.investigators.collect{|x| x.id}
         intra_collaborators_arr = abstract_investigators & unit_pis  # intersection of the two sets

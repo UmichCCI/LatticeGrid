@@ -23,6 +23,7 @@
 		<%# Note: To change the checkbox options, look in ccsg_helper.rb. %>
 		<%= affiliation_types_list('period_stats') %>
 	   <p><%= check_box_tag 'exclude_letters', '1' -%> Exclude Reviews, Editorials, Letters, and Biographies</p>
+	   <p><%= check_box_tag 'limit_high_impact', '1' -%> Limit to High Impact publications</p>
 		  <%= submit_tag 'Generate Stats for dates' %>
 		<% end %> 
 		<br/>
@@ -75,7 +76,7 @@
 
 	<div id="highimpactlist_one_unit">
 		<% form_for :date_range, :url => {:controller => :orgs, :action => :highimpactabstracts_during_period}, :html => { :method => :post, :class => "p" }  do |form| %> 
-		<p>Use the below form for printing:  List for one unit all hight impact articles published between the following dates:</p>
+		<p>Use the below form for printing:  List for one unit all high impact articles published between the following dates:</p>
 
 	  	<p><%= collection_select '', 'id', @head_node.descendants.sort_by(&:name), :id, :name  %> select unit </p>
 		 <p><%= form.text_field(:start_date, :size => 20) %> to
