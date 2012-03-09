@@ -428,14 +428,17 @@ class OrgsController < ApplicationController
   end
 
   def highimpactabstracts_during_period
-    # for printing
+    # Differences with the original function:
+    # - Doesn't support "firstlast only"
+    # - Doesn't support impact factor (for obvious reasons)
+
     handle_start_and_end_date
     @unit = OrganizationalUnit.find(params[:id])
     @faculty = @unit.get_faculty_by_types(params[:affiliation_types])
     @exclude_letters = ! params[:exclude_letters].blank?
     @faculty_affiliation_types = params[:affiliation_types]
-    @abstracts = @unit.highimpactall_ccsg_publications_by_date(@faculty, params[:start_date], params[:end_date], @exclude_letters )
     @investigators_in_unit = @faculty.collect(&:id)
+    @abstracts = Abstract.highimpact_ccsg_publications_by_date(@investigators_in_unit, params[:start_date], params[:end_date], @exclude_letters)
 
     @do_pagination = "0"
     @heading = "#{@abstracts.length} publications. High Impact Publication Listing  "
@@ -470,6 +473,7 @@ class OrgsController < ApplicationController
         :disposition => 'attachment') }
     end
   end
+
   def investigator_abstracts_during_period
     # for printing
     handle_start_and_end_date

@@ -38,13 +38,9 @@ class Abstract < ActiveRecord::Base
           ['is_cancer = true and (abstracts.publication_date between :start_date and :end_date) ', 
             {:start_date => dates.first, :end_date => dates.last } ] }
     }
-  named_scope :hightimpactccsg_abstracts_by_date, lambda { |*dates|
-  {:joins => "INNER JOIN journals on lower(journals.journal_abbreviation) = lower(abstracts.journal_abbreviation) ",
-      :conditions => 
-          ['is_cancer = true and (abstracts.publication_date between :start_date and :end_date) and journals.journal_name in (:journalnames)',
-	    {:journalnames=>["UM_HIGHIMPACT"] , 
-            :start_date => dates.first, :end_date => dates.last } ] }
-}
+  named_scope :highimpact_abstracts,
+    :joins => "INNER JOIN journals on lower(journals.journal_abbreviation) = lower(abstracts.journal_abbreviation)",
+    :conditions => ["journals.include_as_high_impact = 't'"]
   named_scope :with_impact_factor, lambda { |factor|
       { :joins => [:journals],
         :conditions => ['journals.impact_factor >= :impact_factor',  {:impact_factor => factor} ] }
@@ -126,7 +122,27 @@ class Abstract < ActiveRecord::Base
       end
     end
   end
-  
+
+  def self.highimpact_ccsg_publications_by_date(faculty_ids, start_date, end_date, exclude_letters=nil)
+    # Note: This DOES NOT take into account the investigator_abstract is_valid flag.
+    # The reason this code is so ridiculously duplicated is the call to `abstracts.uniq` at
+    # the end of the all_ccsg_publications_by_date function.  If not for that, I could just chain
+    # high_impact onto the end of the query.
+    # I don't see any immediately clean way to move it, though... letting it be for now.
+
+    logger.debug "Running highimpact pubs."
+
+    abstracts = Abstract.by_investigator_ids(faculty_ids).ccsg_abstracts_by_date(start_date, end_date)
+
+    unless exclude_letters.blank? or ! exclude_letters
+      abstracts = abstracts.exclude_letters
+    end
+
+    abstracts = abstracts.highimpact_abstracts
+    abstracts.uniq
+  end
+
+
   def self.all_ccsg_publications_by_date( faculty_ids, start_date, end_date, exclude_letters=nil, first_last_only=false, impact_factor=nil )
     #faculty_ids = faculty.map(&:id)
     if first_last_only
