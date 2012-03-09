@@ -40,7 +40,7 @@ def LatticeGridHelper.GetDefaultSchool()
 end
 
 def LatticeGridHelper.home_url
-  "http://www.cancer.umich.edu"
+  "http://www.cancer.med.umich.edu"
 end
 
 def LatticeGridHelper.curl_host
@@ -50,7 +50,7 @@ case
   when my_env == 'home': 'localhost:3000'
   when my_env == 'development': 'rails-staging2.nubic.northwestern.edu'
   when my_env == 'staging': 'rails-staging2.nubic.northwestern.edu'
-  when my_env == 'production': 'latticegrid.cancer.umich.edu'
+  when my_env == 'production': 'latticegrid-dev.med.umich.edu'
   else 'latticegrid.umich.edu/cancer'
 end 
 end
