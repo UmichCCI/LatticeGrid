@@ -20,6 +20,7 @@ config.action_controller.relative_url_root           = '/cancer' if ENV["HOME"] 
 # Don't care if the mailer can't send
 config.action_mailer.raise_delivery_errors = false
 
+config.log_level = :error
 
 config.after_initialize do
 #  Aker.configure do
