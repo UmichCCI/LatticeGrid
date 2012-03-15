@@ -29,6 +29,20 @@
 		<br/>
 	</div>
 	<p>&nbsp;</p>
+	<div id="edit_high_impact">
+		<p>To change the journals currently considered "high-impact", put a check next to high-impact journals and press the set button.</p>
+		<% form_tag set_high_impact_url do %>
+			<div style="overflow-y:scroll; overflow-x:hidden; height:400px; width: 300px;">
+				<% @journals.each do |j| %>
+				<div><%= check_box_tag "journal_id[]", j.id, j.include_as_high_impact, :id => "journal_id_#{j.id}" -%>
+					<%= label_tag "journal_id_#{j.id}", j.journal_abbreviation -%>
+				</div>
+				<% end %>
+			</div>
+			<p style="margin-top: 5px;"><%= submit_tag "Set High Impact Journals" %></p>
+		<% end %>
+	</div>
+	<p>&nbsp;</p>
 	<div id="list_by_unit">
 		<% form_for :date_range, :url => list_orgs_url, :html => { :method => :get, :class => "p" }  do |form| %> 
 		<p>List by unit all articles published between the following dates:</p>

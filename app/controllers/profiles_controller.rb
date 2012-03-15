@@ -140,6 +140,8 @@ class ProfilesController < ApplicationController
   def ccsg
     @date_range = DateRange.new(1.year.ago,Time.now)
     @investigators = Investigator.find(:all, :order=>"last_name, first_name")
+    @journals = Journal.find(:all, :order => "journal_abbreviation")
+
     render :template => 'abstracts/ccsg.html', :layout => 'application.html'
   end
 

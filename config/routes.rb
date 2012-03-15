@@ -48,6 +48,7 @@ ActionController::Routing::Routes.draw do |map|
   map.org_wheel_data 'graphviz/:id/org_wheel_data.js', :action =>'org_wheel_data', :controller => 'graphviz', :conditions => {:method=>[:get,:post]}
   map.connect 'orgs/abstracts_during_period/:id', :controller => 'orgs', :action => 'abstracts_during_period'
   map.connect 'orgs/highimpactabstracts_during_period/:id', :controller => 'orgs', :action => 'highimpactabstracts_during_period'
+  map.set_high_impact 'orgs/set_high_impact', :controller => 'orgs', :action => 'set_high_impact', :conditions => { :method => :post }
   map.connect 'ccsg', :controller => 'profiles', :action => 'ccsg', :conditions => { :method => :get }
   map.connect 'admin', :controller => 'profiles', :action => 'ccsg', :conditions => { :method => :get }
   map.tag_cloud 'tag_cloud', :controller => 'abstracts', :action => 'tag_cloud', :conditions => { :method => :get }
