@@ -29,11 +29,30 @@
 		<br/>
 	</div>
 	<p>&nbsp;</p>
+	<script type="text/javascript" language="javascript">
+	(function($) {
+		$(function() {
+			// DOM is ready.
+
+			$(function() {
+				$('#spinner').show()
+				$.ajax("<%= high_impact_journals_url %>", {
+					complete: function() {
+						$('#spinner').hide();
+					},
+					success: function(data) {
+						$('#edit_high_impact').html(data);
+						$.configureBoxes();
+					},
+					type: 'get'
+				});
+			});
+
+		});
+	})(jQuery);
+	</script>
 	<div id="edit_high_impact">
-		<script type="text/javascript" language="javascript">
-		<%= remote_function(:url => {:controller => :journals, :action => :high_impact}, :before => "Element.show('spinner')",
-		:complete => "Element.hide('spinner')" ) %>
-		</script>
+		Loading...
 	</div>
 	<p>&nbsp;</p>
 	<div id="list_by_unit">
