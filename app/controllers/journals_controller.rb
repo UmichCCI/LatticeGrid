@@ -21,7 +21,7 @@ class JournalsController < ApplicationController
 		@journals = Journal.find(:all, :order => "journal_abbreviation")
 
 		if not request.xhr?
-			@javascripts_add = ['jquery.min', 'jquery.dualListBox-1.3.min']
+			@javascripts_add = ['jquery.min', 'jquery.dualListBox-1.3']
 			@configure_boxes = true
 			layout = true
 		else

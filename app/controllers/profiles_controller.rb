@@ -140,7 +140,7 @@ class ProfilesController < ApplicationController
   def ccsg
     @date_range = DateRange.new(1.year.ago,Time.now)
     @investigators = Investigator.find(:all, :order=>"last_name, first_name")
-    @javascripts_add = ['jquery.dualListBox-1.3.min'] # Required for the high_impact journal picker.
+    @javascripts_add = ['jquery.dualListBox-1.3'] # Required for the high_impact journal picker.
 
     render :template => 'abstracts/ccsg.html', :layout => 'application.html'
   end
