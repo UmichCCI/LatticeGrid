@@ -29,6 +29,9 @@
 		<br/>
 	</div>
 	<p>&nbsp;</p>
+	<% if flash[:ccsg_notice] %>
+		<p style="color: green;"><%= flash[:ccsg_notice] %></p>
+	<% end %>
 	<script type="text/javascript" language="javascript">
 	(function($) {
 		$(function() {
