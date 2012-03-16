@@ -172,6 +172,7 @@
         //attach onSubmit functionality if desired
         if (settings[index].selectOnSubmit) {
             $('#' + settings[index].box2View).closest('form').submit(function() {
+                ClearFilter(group2[index]);
                 $('#' + settings[index].box2View).children('option').attr('selected', 'selected');
             });
         }
