@@ -1,7 +1,7 @@
 <% if @configure_boxes %>
 <script>
 $(function() {
-	jQuery.configureBoxes();
+	jQuery.configureBoxes({sortBy:'value'});
 });
 </script>
 <% end %>
@@ -17,10 +17,10 @@ $(function() {
 	</tr>
 	<tr>
 		<td>
-		<select id="box1View" multiple="multiple" style="height:500px;width:300px;">
+		<select id="box1View" multiple="multiple" style="height:500px;width:300px;font-family:monospace;">
 			<% @journals.each do |j| %>
 				<% if !j.include_as_high_impact %>
-					<option value="<%= j.id %>"><%= j.journal_abbreviation %></option>
+					<option value="<%= j.journal_abbreviation %>"><%= "%9s%s%s" % [j.issn, '&nbsp;' * (12 - j.issn.to_s.length), j.journal_abbreviation] %></span></option>
 				<% end %>
 			<% end %>
 		</select><select id="box1Storage"></select>
@@ -34,10 +34,10 @@ $(function() {
 	<!-- </div> -->
 	</td>
 	<td>
-	<select name="journal_ids[]" id="box2View" multiple="multiple" style="height:500px;width:300px;">
+	<select name="journal_abbrs[]" id="box2View" multiple="multiple" style="height:500px;width:300px;font-family:monospace;">
 		<% @journals.each do |j| %>
 			<% if j.include_as_high_impact %>
-				<option value="<%= j.id %>"><%= j.journal_abbreviation %></option>
+				<option value="<%= j.journal_abbreviation %>"><%= "%9s%s%s" % [j.issn, '&nbsp;' * (12 - j.issn.to_s.length), j.journal_abbreviation] %></span></option>
 			<% end %>
 		<% end %>
 	</select><select id="box2Storage"></select>

@@ -45,7 +45,7 @@
 					},
 					success: function(data) {
 						$('#edit_high_impact').html(data);
-						$.configureBoxes();
+						$.configureBoxes({sortBy:'value'});
 					},
 					type: 'get'
 				});

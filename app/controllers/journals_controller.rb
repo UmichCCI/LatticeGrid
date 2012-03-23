@@ -5,7 +5,7 @@ class JournalsController < ApplicationController
 
 		Journal.transaction do
 			Journal.update_all(:include_as_high_impact => false)
-			Journal.update_all({:include_as_high_impact => true}, {:id => params[:journal_ids]})
+			Journal.update_all({:include_as_high_impact => true}, {:journal_abbreviation => params[:journal_abbrs]})
 		end
 
 		# Technically, it's possible that someone could go to /journals/high_impact_journals.
