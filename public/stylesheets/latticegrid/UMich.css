@@ -163,4 +163,6 @@ color: white;
 .ddsmoothmenu-v ul li ul li.current, .ddsmoothmenu-v ul li ul li.current a {
 	background-color: #09286B;
 }
- 
+
+/* For the dual ListBoxes on the CCSG page that set high-impact journals. */
+.copiedOption { background-color: #ff6; }
