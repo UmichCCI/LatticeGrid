@@ -15,15 +15,17 @@ class JournalsController < ApplicationController
 			end
 		else
 			# Being strict about this because checking submit button values isn't too common.
-			render :text => "Commit value not supported: #{params[:commit]}", :status => 400
+			render :text => "Commit value not supported: #{params[:commit]}", :status => 400, :type => 'text/plain'
 			return
 		end
+
+		# Displays on the CCSG page, currently.  Need to fix this because of caching.
+		flash[:ccsg_notice] = "High-impact journals successfully updated."
 
 		# Technically, it's possible that someone could go to /journals/high_impact_journals.
 		# It will render correctly, and they could set high-impact journals from there.
 		# But the real interface is through CCSG.
 		# So we'll redirect back there and worry about this if it actually becomes a problem.
-		flash[:ccsg_notice] = "High-impact journals successfully updated."
 		redirect_to '/ccsg'
 	end
 
