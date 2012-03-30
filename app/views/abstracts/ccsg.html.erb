@@ -29,28 +29,38 @@
 		<br/>
 	</div>
 	<p>&nbsp;</p>
-	<% if flash[:ccsg_notice] %>
-		<p style="color: green;"><%= flash[:ccsg_notice] %></p>
-	<% end %>
+	<p style="color: green; display:none;" id="ccsg_notice"></p>
 	<script type="text/javascript" language="javascript">
 	(function($) {
 		$(function() {
 			// DOM is ready.
+			// Check the cookies.  If we have a notice, set it and display the paragraph.
 
-			$(function() {
-				$('#spinner').show()
-				$.ajax("<%= high_impact_journals_url %>", {
-					complete: function() {
-						$('#spinner').hide();
-					},
-					success: function(data) {
-						$('#edit_high_impact').html(data);
-						$.configureBoxes({sortBy:'value', transferMode:'copy'});
-					},
-					type: 'get'
-				});
+			// Modified from Mozilla: https://developer.mozilla.org/en/DOM/document.cookie
+			var ctext = decodeURIComponent(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + "ccsg_notice" + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+
+			if (ctext != document.cookie) {
+				// Interestingly, there isn't any better way to ditch the pluses.
+				$('#ccsg_notice').text(ctext.replace(/\+/g, ' ')).show();
+
+				// Also from Mozilla.
+				var oExpDate = new Date();
+				oExpDate.setDate(oExpDate.getDate() - 1);
+				document.cookie = 'ccsg_notice' + "=; expires=" + oExpDate.toGMTString() + "; path=/";
+			}
+
+			// Load the high-impact journals listing.
+			$('#spinner').show()
+			$.ajax("<%= high_impact_journals_url %>", {
+				complete: function() {
+					$('#spinner').hide();
+				},
+				success: function(data) {
+					$('#edit_high_impact').html(data);
+					$.configureBoxes({sortBy:'value', transferMode:'copy'});
+				},
+				type: 'get'
 			});
-
 		});
 	})(jQuery);
 	</script>

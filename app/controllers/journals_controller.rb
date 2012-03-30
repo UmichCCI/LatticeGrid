@@ -20,7 +20,7 @@ class JournalsController < ApplicationController
 		end
 
 		# Displays on the CCSG page, currently.  Need to fix this because of caching.
-		flash[:ccsg_notice] = "High-impact journals successfully updated."
+		cookies[:ccsg_notice] = "High-impact journals successfully updated."
 
 		# Technically, it's possible that someone could go to /journals/high_impact_journals.
 		# It will render correctly, and they could set high-impact journals from there.
