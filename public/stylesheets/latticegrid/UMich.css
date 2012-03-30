@@ -166,3 +166,15 @@ color: white;
 
 /* For the dual ListBoxes on the CCSG page that set high-impact journals. */
 .copiedOption { background-color: #ff6; }
+
+#ccsg_journal_show, #ccsg_journal_listing {
+	/* Designed to match "#biograph table tr td" */
+	color: #183470;
+	line-height: 14px;
+}
+
+#ccsg_journal_show { cursor: pointer; }
+#ccsg_journal_listing {
+	width: 75%;
+	margin: 0 auto 40px;
+}

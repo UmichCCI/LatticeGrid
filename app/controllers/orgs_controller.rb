@@ -292,6 +292,7 @@ class OrgsController < ApplicationController
       unit_pis = unit_faculty.map(&:id)
       if @limit_to_highimpact
         unit["publications"] = Abstract.highimpact_ccsg_publications_by_date(unit_pis, params[:start_date], params[:end_date], @exclude_letters)
+        @high_impact_journals = Journal.all(:conditions => {:include_as_high_impact => true}, :order => 'journal_abbreviation ASC')
       else
         unit["publications"] = Abstract.all_ccsg_publications_by_date(unit_pis, params[:start_date], params[:end_date], @exclude_letters)
       end
@@ -304,6 +305,7 @@ class OrgsController < ApplicationController
         unit.pi_intra_abstracts.push(abstract) if intra_collaborators > 1
       end
     end
+    @javascripts_add = ['jquery.min']
     render :layout => 'printable', :action => 'stats'
   end
 

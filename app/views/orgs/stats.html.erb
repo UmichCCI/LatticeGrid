@@ -18,7 +18,26 @@ The following is a list of the total publications, number of publications with i
 <%= affiliation_filter_string(@faculty_affiliation_types) %>
 
 <% if @limit_to_highimpact %>
-<p style="font-weight:bold; margin-top: 6pt;">Statistics on this page are limited to high-impact publications.</p>
+<p style="font-weight:bold; margin-top: 6pt;">Statistics on this page are limited to abstracts in
+	<%= pluralize(@high_impact_journals.length, 'high-impact journal') %>:</p>
+	<span id='ccsg_journal_show'>Show  &#10162;</span>
+	<table id='ccsg_journal_listing' style='display: none;'>
+	<% groups = @high_impact_journals.map(&:journal_abbreviation).in_groups(5, '&nbsp;')
+	(0..groups.map(&:length).max).each do |i| %>
+	<tr>
+		<% groups.each do |group| %>
+		<td><%= group[i] %></td>
+		<% end %>
+	</tr>
+	<% end %>
+	<script type="text/javascript">
+	$j(function () {
+		$j('#ccsg_journal_show').click(function() {
+			$j('#ccsg_journal_listing').toggle();
+		});
+	});
+	</script>
+	</table>
 <% end %>
 
 <% if @exclude_letters %>
