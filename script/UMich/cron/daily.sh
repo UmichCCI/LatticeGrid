@@ -3,16 +3,21 @@
 # Run the nightly build task.
 # Source: customization.txt
 
-rake RAILS_ENV=production nightlyBuild >> rake.log
-rake RAILS_ENV=production db:vacuum
+# Sample cron line:
+# 10 1 * * * adorack /var/www/apps/umich_latticegrid/script/UMich/cron/daily.sh
 
-rake tmp:cache:clear 
-rake cache:clear
-rake RAILS_ENV=production cache:populate taskname=abstracts > cache.log
-rake RAILS_ENV=production cache:populate taskname=investigators >> cache.log
-rake RAILS_ENV=production cache:populate taskname=orgs >> cache.log
-rake RAILS_ENV=production cache:populate taskname=investigator_graphs >> cache.log
-rake RAILS_ENV=production cache:populate taskname=org_graphs >> cache.log
-rake RAILS_ENV=production cache:populate taskname=investigator_graphviz >> cache.log
-rake RAILS_ENV=production cache:populate taskname=org_graphviz >> cache.log
-rake RAILS_ENV=production cache:populate taskname=mesh >> cache.log
+cd /var/www/apps/umich_latticegrid/
+
+bundle exec rake RAILS_ENV=production nightlyBuild >> log/rake.log
+bundle exec rake RAILS_ENV=production db:vacuum
+
+bundle exec rake tmp:cache:clear
+bundle exec rake cache:clear
+bundle exec rake RAILS_ENV=production cache:populate taskname=abstracts > log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=investigators >> log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=orgs >> log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=investigator_graphs >> log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=org_graphs >> log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=investigator_graphviz >> log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=org_graphviz >> log/cache.log
+bundle exec rake RAILS_ENV=production cache:populate taskname=mesh >> log/cache.log
