@@ -25,8 +25,11 @@ $(function() {
 			<% end %>
 		</select><select id="box1Storage"></select>
 	</td>
-	<td>
+	<td style="vertical-align:top;">
 	<!-- <div style="float:left;"> -->
+	<p style="margin: 5px 0 20px; text-align:center;"><span id="change_status">No changes.</span><br />
+<%= submit_tag "Save", {:disabled => true, :id => 'high_impact_save'} %><%= submit_tag "Restore Defaults" %></p>
+
 	<button id="allTo1" type="button">&nbsp;&lt;&lt;&nbsp;</button>
 	<button id="to1" type="button">&nbsp;&lt;&nbsp;</button>
 	<button id="to2" type="button">&nbsp;>&nbsp;</button>
@@ -51,5 +54,4 @@ $(function() {
 	<td><span id="box2Counter" class="countLabel"></span></td>
 	</tr>
 	</table>
-	<p style="margin-top: 5px;"><%= submit_tag "Set High Impact Journals" %><%= submit_tag "Restore Defaults" %></p>
 <% end %>

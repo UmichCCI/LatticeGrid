@@ -3,24 +3,23 @@ class JournalsController < ApplicationController
 	def set_high_impact_journals
 		# Request method is restricted to post.
 
-		if params[:commit] == "Set High Impact Journals"
+		if params[:commit] == "Save"
 			Journal.transaction do
 				Journal.update_all(:include_as_high_impact => false)
 				Journal.update_all({:include_as_high_impact => true}, {:journal_abbreviation => params[:journal_abbrs]})
 			end
+			cookies[:ccsg_notice] = "Changes saved."
 		elsif params[:commit] == "Restore Defaults"
 			Journal.transaction do
 				Journal.update_all(:include_as_high_impact => false)
 				Journal.update_all({:include_as_high_impact => true}, {:issn => LatticeGridHelper.high_impact_issns})
 			end
+			cookies[:ccsg_notice] = "Reset to defaults."
 		else
 			# Being strict about this because checking submit button values isn't too common.
 			render :text => "Commit value not supported: #{params[:commit]}", :status => 400, :type => 'text/plain'
 			return
 		end
-
-		# Displays on the CCSG page, currently.  Need to fix this because of caching.
-		cookies[:ccsg_notice] = "High-impact journals successfully updated."
 
 		# Technically, it's possible that someone could go to /journals/high_impact_journals.
 		# It will render correctly, and they could set high-impact journals from there.

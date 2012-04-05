@@ -178,3 +178,11 @@ table.ccsg_journal_listing {
 	width: 75%;
 	margin: 0 auto 40px;
 }
+
+.ccsg_saved {
+	color: green;
+}
+
+.ccsg_unsaved {
+	color: red;
+}
