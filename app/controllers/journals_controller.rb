@@ -35,7 +35,6 @@ class JournalsController < ApplicationController
 		# Leaving it in for now because who knows how the CCSG page will change.
 		if not request.xhr?
 			@javascripts_add = ['jquery.min', 'jquery.dualListBox-1.3']
-			@configure_boxes = true
 			layout = true
 		else
 			layout = false

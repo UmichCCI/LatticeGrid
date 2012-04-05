@@ -1,10 +1,33 @@
-<% if @configure_boxes %>
-<script>
-$(function() {
-	jQuery.configureBoxes({sortBy:'value', transferMode:'copy'});
-});
-</script>
-<% end %>
+<script type="text/javascript">
+(function($) {
+	$(function() {
+		// DOM is ready.
+		$.configureBoxes({sortBy:'value', transferMode:'copy'});
+
+		// Watch the buttons for click events; update the save button if they are clicked.
+		$("#to1, #allTo1, #to2, #allTo2").click(function(event) {
+			$('#change_status').text("Changes are NOT saved.");
+			$('#change_status').removeClass('ccsg_saved').addClass('ccsg_unsaved');
+			$('#high_impact_save').removeAttr('disabled');
+			$(this).unbind(event);
+		});
+
+		// Check the cookies.  If we have a notice, set it and display the paragraph.
+
+		// Modified from Mozilla: https://developer.mozilla.org/en/DOM/document.cookie
+		var ctext = decodeURIComponent(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + "ccsg_notice" + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+
+		if (ctext != document.cookie) {
+			// Interestingly, there isn't any better way to ditch the pluses.
+			$('#change_status').text(ctext.replace(/\+/g, ' ')).addClass('ccsg_saved');
+
+			// Also from Mozilla.
+			var oExpDate = new Date();
+			oExpDate.setDate(oExpDate.getDate() - 1);
+			document.cookie = 'ccsg_notice' + "=; expires=" + oExpDate.toGMTString() + "; path=/";
+		}
+	});
+})(jQuery);</script>
 <p>Please select the journals that you wish to consider high-impact for all CCSG queries.</p>
 <% form_tag set_high_impact_journals_url do %>
 	<table>
