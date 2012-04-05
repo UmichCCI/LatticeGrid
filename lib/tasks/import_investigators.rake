@@ -27,8 +27,10 @@ end
 task :cleanUpOrganizations => :environment do
   CleanUpOrganizationData()
 end
+
 task :importInvestigators => :environment do
   read_file_handler("importInvestigators" ) {|filename| ReadInvestigatorData(filename)}
+  InvestigatorLoadDate.new(:load_date=> Time.now).save
 end
 
 task :importJointAppointments => :environment do
