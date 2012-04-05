@@ -228,7 +228,7 @@ module ApplicationHelper
 
   def user_update_date
     if session[:last_user_load_date]
-      "Investigators last updated on %s. <br />" % session[:last_user_load_date].strftime("%A, %B %d, %Y")
+      "Last updated investigators on %s. <br />" % session[:last_user_load_date].strftime("%A, %B %d, %Y")
     else
       ""
     end
