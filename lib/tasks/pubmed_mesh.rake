@@ -26,6 +26,7 @@ task :tagAbstractsWithMeshTerms => [:getAbstracts] do
   }
   abstract_tag_count = Tagging.count(:conditions=>"taggable_type='Abstract'")
   puts "count of all abstract MeSH tags is #{abstract_tag_count}" if LatticeGridHelper.verbose?
+  @AllAbstracts = nil # Memory leaks.
 end
 
 task :tagInvestigatorsWithMeshTerms => [:getInvestigators] do
@@ -198,5 +199,13 @@ task :nightlyBuild => [:insertAbstracts, :updateAbstractInvestigators, :buildCoa
 end
 
 task :monthlyBuild => [ :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh] do
+  puts "task monthlyBuild completed. Includes the tasks :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh" if LatticeGridHelper.verbose?
+end
+
+task :monthlyBuild1 => [ :tagAbstractsWithMeshTerms ] do
+  puts "task monthlyBuild completed. Includes the tasks :tagAbstractsWithMeshTerms" if LatticeGridHelper.verbose?
+end
+
+task :monthlyBuild2 => [:tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh] do
   puts "task monthlyBuild completed. Includes the tasks :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh" if LatticeGridHelper.verbose?
 end
