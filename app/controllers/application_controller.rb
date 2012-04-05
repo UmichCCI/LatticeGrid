@@ -50,6 +50,13 @@ class ApplicationController < ActionController::Base
       else
         session[:last_load_date] = latest_record.updated_at
       end
+
+      latest_user = Investigator.find(:first, :order => "updated_at DESC")
+      if !latest_user.blank?
+        session[:last_user_load_date] = latest_user.updated_at
+      end
+      # If there aren't any investigators, the date just doesn't display.
+
       session[:last_refresh] = Time.now
       logger.info("Updated a session last_load_date for ip #{get_client_ip} at #{Time.now}") 
     end

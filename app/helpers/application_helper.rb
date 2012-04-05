@@ -225,4 +225,13 @@ module ApplicationHelper
     tooltip ||= text 
     link_to( text, ((abstract.url.blank?) ? "http://www.ncbi.nlm.nih.gov/pubmed/"+abstract.pubmed : abstract.url), :target => '_blank', :title=>tooltip) 
   end
+
+  def user_update_date
+    if session[:last_user_load_date]
+      "Investigators last updated on %s. <br />" % session[:last_user_load_date].strftime("%A, %B %d, %Y")
+    else
+      ""
+    end
+  end
+
 end
