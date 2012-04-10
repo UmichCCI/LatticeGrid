@@ -3,8 +3,11 @@
 # Run the nightly build task.
 # Source: customization.txt
 
+# REMEMBER: Set PATH such that `bundle` and `ruby` are both visible.
+# On the production server, we use Ruby Enterprise Edition, which installs itself in /opt.
+
 # Sample cron line:
-# 10 1 * * * adorack (cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/daily.sh 2>&1 >> log/cron.log)
+# 10 1 * * * adorack (PATH=/usr/local/bin:$PATH; cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/daily.sh 2>&1 >> log/cron.log)
 
 echo "Beginning nightly build on $(date)"
 

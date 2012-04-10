@@ -3,8 +3,11 @@
 # Runs the monthly build task.  This is a very long-running job that updates MESH stuff.
 # According to customization.txt, this should be run after nightly build.
 
+# REMEMBER: Set PATH such that `bundle` and `ruby` are both visible.
+# On the production server, we use Ruby Enterprise Edition, which installs itself in /opt.
+
 # Sample cron line: (Every month on the 3rd)
-# 10 3 3 * * adorack (cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/monthly.sh 2>&1 >> log/cron.log)
+# 10 3 3 * * adorack (PATH=/usr/local/bin:$PATH; cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/monthly.sh 2>&1 >> log/cron.log)
 
 echo "Beginning monthly build on $(date)"
 
