@@ -11,7 +11,7 @@
 
 echo "Beginning nightly build on $(date)"
 
-bundle exec rake RAILS_ENV=production nightlyBuild >> log/rake.log
+bundle exec rake RAILS_ENV=production nightlyBuild 2>&1 >> log/rake.log
 bundle exec rake RAILS_ENV=production db:vacuum
 
 echo "Building cache on $(date)"
