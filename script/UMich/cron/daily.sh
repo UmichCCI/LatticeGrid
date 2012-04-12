@@ -6,8 +6,8 @@
 # REMEMBER: Set PATH such that `bundle` and `ruby` are both visible.
 # On the production server, we use Ruby Enterprise Edition, which installs itself in /opt.
 
-# Sample cron line:
-# 10 1 * * * adorack (PATH=/usr/local/bin:$PATH; cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/daily.sh 2>&1 >> log/cron.log)
+# Sample crontab entry:
+# 10 1 * * * nobody (PATH=/opt/ruby-enterprise-1.8.7-2012.02/bin:$PATH; cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/daily.sh 2>&1 >> log/cron.log)
 
 echo "Beginning nightly build on $(date)"
 
