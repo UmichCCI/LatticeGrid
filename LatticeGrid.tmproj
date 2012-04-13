@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>config/initializers/latticegrid.rb</string>
+	<string>doc/example_loads.txt</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -18,67 +18,9 @@
 		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
-	<integer>392</integer>
+	<integer>384</integer>
 	<key>metaData</key>
 	<dict>
-		<key>app/controllers/cytoscape_controller.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>11</integer>
-				<key>line</key>
-				<integer>69</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>4</integer>
-				<key>line</key>
-				<integer>69</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>11</integer>
-				<key>line</key>
-				<integer>69</integer>
-			</dict>
-		</dict>
-		<key>app/controllers/orgs_controller.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>50</integer>
-				<key>line</key>
-				<integer>7</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
-		<key>app/views/cytoscape/show.html.erb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>4</integer>
-				<key>line</key>
-				<integer>135</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
 		<key>app/views/graphs/org_nodes.rxml</key>
 		<dict>
 			<key>caret</key>
@@ -112,7 +54,7 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>15</integer>
+				<integer>13</integer>
 				<key>line</key>
 				<integer>3</integer>
 			</dict>
@@ -121,14 +63,14 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>doc/example_loads.txt</key>
+		<key>config/routes.rb</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>17</integer>
+				<integer>170</integer>
 				<key>line</key>
-				<integer>29</integer>
+				<integer>15</integer>
 			</dict>
 			<key>columnSelection</key>
 			<false/>
@@ -139,16 +81,46 @@
 			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
-				<integer>5</integer>
+				<integer>163</integer>
 				<key>line</key>
-				<integer>29</integer>
+				<integer>15</integer>
 			</dict>
 			<key>selectTo</key>
 			<dict>
 				<key>column</key>
-				<integer>33</integer>
+				<integer>170</integer>
 				<key>line</key>
-				<integer>29</integer>
+				<integer>15</integer>
+			</dict>
+		</dict>
+		<key>doc/example_loads.txt</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>7</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>6</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>7</integer>
 			</dict>
 		</dict>
 		<key>doc/publications_scripts.txt</key>
@@ -165,7 +137,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>99</integer>
+			<integer>0</integer>
 			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
@@ -185,15 +157,13 @@
 	<key>openDocuments</key>
 	<array>
 		<string>doc/publications_scripts.txt</string>
-		<string>doc/example_loads.txt</string>
-		<string>app/controllers/orgs_controller.rb</string>
-		<string>app/controllers/cytoscape_controller.rb</string>
-		<string>app/views/cytoscape/show.html.erb</string>
+		<string>config/routes.rb</string>
 		<string>config/initializers/latticegrid.rb</string>
+		<string>doc/example_loads.txt</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{10, 145}, {1320, 883}}</string>
+	<string>{{10, 0}, {1283, 1028}}</string>
 </dict>
 </plist>
