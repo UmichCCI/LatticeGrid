@@ -238,7 +238,7 @@ module ApplicationHelper
     if !current_page? url
       link_to(text, url)
     else
-      text
+      "<span class='current_page'>#{h text}</span>"
     end
   end
 

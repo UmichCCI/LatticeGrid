@@ -12,6 +12,10 @@ h1, h2, .h2, h3, .h3 {
 }
 
 a:visited { color: #666; }
+span.current_page {
+	color: #666;
+	font-style: italic;
+}
 
 #biograph table tr td {
 	padding-top: 0.125em;
