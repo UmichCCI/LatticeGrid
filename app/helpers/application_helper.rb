@@ -234,4 +234,12 @@ module ApplicationHelper
     end
   end
 
+  def conditional_link(text, url)
+    if !current_page? url
+      link_to(text, url)
+    else
+      text
+    end
+  end
+
 end
