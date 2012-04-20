@@ -185,7 +185,7 @@ class InvestigatorsController < ApplicationController
       @total_entries=@abstracts.total_entries
       @include_all_mesh = true
       respond_to do |format|
-        format.html { render :action => :show}
+        format.html { render :action => :show }
       end
     end
   end 
@@ -336,9 +336,13 @@ class InvestigatorsController < ApplicationController
     end
     if !params[:id].blank? then
       @investigators = Investigator.investigators_tsearch(params[:id])
-      @heading = "There were #{@investigators.length} matches to search term <i>"+params[:id].downcase+"</i>"
-      @include_mesh=false
-      render :action => :index, :layout => "searchable"
+      if @investigators.length == 1
+        redirect_to show_investigator_path(:id=>@investigators[0].username, :page=>1)
+      else
+        @heading = "There were #{@investigators.length} matches to search term <i>"+params[:id].downcase+"</i>"
+        @include_mesh=false
+        render :action => :index, :layout => "searchable"
+      end
     else 
       logger.error "search did not have a defined keyword"
       year_list  # includes a render
