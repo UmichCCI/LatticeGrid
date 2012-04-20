@@ -28,36 +28,31 @@
       <br/>
         <span id='nav_links'>
           Publication Graphs:
-          <%= conditional_link('Flash', show_member_graph_url(params[:id])) %>
-          <%= conditional_link("Graphviz", show_member_graphviz_url(params[:id]) )%>
-          <%= conditional_link('Wheel', investigator_wheel_graphviz_url(params[:id]) )%>
-          <%= conditional_link('Cytoscape', cytoscape_url(params[:id]))%>
+          &nbsp; <%= conditional_link('Flash', show_member_graph_url(params[:id])) %>
+          &nbsp;&nbsp; <%= conditional_link("Graphviz", show_member_graphviz_url(params[:id]) )%>
+          &nbsp;&nbsp; <%= conditional_link('Wheel', investigator_wheel_graphviz_url(params[:id]) )%>
+          &nbsp;&nbsp; <%= conditional_link('Cytoscape', cytoscape_url(params[:id]))%>
         </span>
       <br/>
         <span id='nav_links2'>
           <% if defined?(LatticeGridHelper.include_awards?) and LatticeGridHelper.include_awards?() %>
             Award data:
-            <%= conditional_link('Graph', awards_cytoscape_url(params[:id]) ) %>
-            &nbsp;&nbsp;
-            <%= conditional_link( "Report", investigator_award_url(params[:id]) ) %>
-            &nbsp;&nbsp;
+            &nbsp; <%= conditional_link('Graph', awards_cytoscape_url(params[:id]) ) %>
+            &nbsp;&nbsp; <%= conditional_link( "Report", investigator_award_url(params[:id]) ) %>
           <% end %>
           MeSH:
-          <%= conditional_link( "similarities graph", show_member_mesh_graphviz_url(params[:id])) %>
-          &nbsp;&nbsp;
+          &nbsp; <%= conditional_link( "similarities graph", show_member_mesh_graphviz_url(params[:id])) %>
         </span>
       <br/>
          <span id='nav_links3'>
          <% if defined?(LatticeGridHelper.include_studies?) and LatticeGridHelper.include_studies?() %>
-           Study data: &nbsp;
-             <%= conditional_link('Graph', studies_cytoscape_url(params[:id]) ) %>
-             &nbsp;&nbsp;
-             <%= conditional_link("Report", investigator_study_url(params[:id]) ) %>
-             &nbsp;&nbsp; 
-             &nbsp;Combined data: &nbsp; 
+           Study data:
+             &nbsp; <%= conditional_link('Graph', studies_cytoscape_url(params[:id]) ) %>
+             &nbsp;&nbsp; <%= conditional_link("Report", investigator_study_url(params[:id]) ) %>
+             &nbsp; Combined data: &nbsp;
              <%= conditional_link( "Graph", show_all_cytoscape_url(params[:id]) ) %>
-             &nbsp;&nbsp; 
          <% end %>
         </span>
-  </td></tr>
+    </td>
+  </tr>
 </table>
