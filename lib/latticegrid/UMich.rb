@@ -54,7 +54,7 @@ case
   when my_env == 'home': 'localhost:3000'
   when my_env == 'development': 'rails-staging2.nubic.northwestern.edu'
   when my_env == 'staging': 'rails-staging2.nubic.northwestern.edu'
-  when my_env == 'production': 'latticegrid-dev.med.umich.edu'
+  when my_env == 'production': 'latticegrid.med.umich.edu'
   else 'latticegrid.umich.edu/cancer'
 end 
 end
