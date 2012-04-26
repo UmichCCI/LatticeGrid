@@ -235,7 +235,11 @@ module ApplicationHelper
   end
 
   def conditional_link(text, url)
-    if !current_page? url
+    url_check = ActionController::Routing::Routes.recognize_path(url.sub(%r!^https?://[^/]+!i, ''))
+    # logger.debug "Matched URL #{url.inspect} to route #{url_check.inspect}"
+    url_check.delete(:page)
+
+    if !current_page? url_check
       link_to(text, url)
     else
       "<span class='current_page'>#{h text}</span>"
