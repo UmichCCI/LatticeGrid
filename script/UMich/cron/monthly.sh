@@ -11,7 +11,8 @@
 
 echo "Beginning monthly build on $(date)"
 
-bundle exec rake RAILS_ENV=production monthlyBuild 2>&1 >> log/monthly_rake.log
+bundle exec rake RAILS_ENV=production monthlyBuild1 2>&1 >> log/monthly_rake.log
+bundle exec rake RAILS_ENV=production monthlyBuild2 2>&1 >> log/monthly_rake.log
 bundle exec rake RAILS_ENV=production db:vacuum
 
 echo "Finished building mesh on $(date)"
