@@ -27,7 +27,7 @@ if [ ! -f "db/imports/UMich/division_lookup.txt" ] || [ ! -f "db/imports/UMich/a
 	exit -1
 fi
 
-ruby script/UMich/parse_members.rb "db/imports/UMich/all_members.txt" "db/imports/UMich/core_members.txt" "db/imports/UMich/member_output.txt"
+ruby script/UMich/parse_members_from_files.rb "db/imports/UMich/all_members.txt" "db/imports/UMich/core_members.txt" "db/imports/UMich/member_output.txt"
 
 bundle exec rake importOrganizations file=db/imports/UMich/division_lookup.txt
 bundle exec rake purgeUnupdatedOrganizations
