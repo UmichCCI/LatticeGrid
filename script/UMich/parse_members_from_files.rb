@@ -6,6 +6,8 @@ require 'set'
 
 if ARGV.empty? || !ARGV[0..2].all?
 	$stderr.puts "Usage: all_members core_members output"
+	$stderr.puts
+	$stderr.puts "This file parses and combines two files from the CTO website.  It sets the member_type column based on set differences between the two files."
 	exit
 end
 

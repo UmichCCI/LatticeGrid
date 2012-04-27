@@ -48,6 +48,7 @@ GEM
     rdoc (3.6.1)
     rmagick (2.13.1)
     ruby-graphviz (0.9.20)
+    ruby-oci8 (2.1.1)
     rubytree (0.7.0)
     warden (1.0.6)
       rack (>= 1.0)
@@ -72,4 +73,5 @@ DEPENDENCIES
   rdoc
   rmagick
   ruby-graphviz
+  ruby-oci8
   will_paginate
