@@ -7,7 +7,7 @@ require './db/cto_oracle_settings'
 include Settings  # Defines the USER, PASSWORD, DSN, and TABLE_* constants.
 
 conn = OCI8.new(USER, PASSWORD, DSN)
-cur = conn.exec("SELECT * FROM %s.%s" % [TABLE_OWNER, TABLE_NAME])
+cur = conn.exec("SELECT * FROM %s.%s" % [TABLE_OWNER, MEMBER_TABLE_NAME])
 
 hdict = {'LAST_NAME' => 'last_name', 'FIRST_NAME' => 'first_name', 'MIDDLE_NAME' => 'middle_name', 'DEGREE' => 'degrees', 'TITLE_NAME' => 'rank', 'DEPARTMENT_NAME' => 'department', 'PROGRAM_CODE' => 'program_num', 'PROGRAM_NAME' => 'program', 'PUBMED_SEARCH_NAME' => 'pubmed_search_name', 'PUBMED_LIMIT_TO_INSTITUTION' => 'pubmed_limit_to_institution', 'EMAIL_ADDRESS' => 'email', 'UNIQNAME' => 'username', 'EMPID' => 'employee_id', 'ASSOCIATION_NAME' => 'assoc_name', 'PRIMARY_PROGRAM_CODE' => 'home_department_id'}
 
