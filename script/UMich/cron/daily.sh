@@ -13,7 +13,7 @@
 
 echo "Beginning nightly build on $(date)"
 
-bundle exec rake RAILS_ENV=production nightlyBuild 2>&1 >> log/rake.log
+bundle exec rake --trace RAILS_ENV=production nightlyBuild
 bundle exec rake RAILS_ENV=production db:vacuum
 
 echo "Finished nightly rake task on $(date)"
