@@ -13,11 +13,10 @@
 		});
 
 		// Check the cookies.  If we have a notice, set it and display the paragraph.
-
 		// Modified from Mozilla: https://developer.mozilla.org/en/DOM/document.cookie
-		var ctext = decodeURIComponent(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + "ccsg_notice" + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+		if (new RegExp("(?:^|;\\s*)" + "ccsg_notice" + "\\s*\\=").test(document.cookie)) {
+			var ctext = decodeURIComponent(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + "ccsg_notice" + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
 
-		if (ctext != document.cookie) {
 			// Interestingly, there isn't any better way to ditch the pluses.
 			$('#change_status').text(ctext.replace(/\+/g, ' ')).addClass('ccsg_saved');
 
