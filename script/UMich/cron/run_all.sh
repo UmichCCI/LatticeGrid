@@ -8,6 +8,18 @@
 # The monthly build task will run on this day (DD format):
 mday="07"
 
+# Automatically load investigators on this day (DD format):
+iday="06"
+
+# Don't keep going if a command fails.
+set -e
+set -o pipefail
+
+if [[ `date "+%d"` -eq $iday ]]; then
+	echo "Importing investigators..."
+	script/UMich/import_investigators_from_db.sh
+fi
+
 script/UMich/daily.sh
 
 if [[ `date "+%d"` -eq $mday ]]; then
