@@ -1,10 +1,3 @@
-if ARGV.empty?
-	$stderr.puts "Usage: #{$0} output_file"
-	$stderr.puts
-	$stderr.puts "This file dumps formatted data from the database view, identifing the primary department and adjusting the member_type values."
-	exit
-end
-
 require 'rubygems'
 require "bundler/setup"
 
@@ -24,7 +17,7 @@ header_out = headers.select{|h| hmap.has_key? h }  # LAST_NAME, FIRST_NAME, ...
 human_headers = header_out.map{|h| hmap[h] }  #  last_name, first_name, ...
 file_headers = ['member_type'] + human_headers - ['assoc_name']
 
-FasterCSV.open(ARGV[0], "w", :headers => file_headers, :col_sep => "\t", :write_headers => true) do |csv|
+FasterCSV($stdout, :headers => file_headers, :col_sep => "\t", :write_headers => true) do |csv|
 	while dbrow = cur.fetch_hash()
 
 		row = Hash[*human_headers.zip(dbrow.values_at(*header_out)).flatten]

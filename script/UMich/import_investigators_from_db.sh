@@ -23,7 +23,7 @@ set -o pipefail
 echo "Beginning to import orgs and investigators on $(date)"
 
 echo "Backing up the database..."
-/usr/pgsql-9.1/bin/pg_dump -U latticegrid umich_latticegrid_development | bzip -9 > db/backup/lg_production-$(date '+%Y-%m-%d').sql.bz2
+/usr/pgsql-9.1/bin/pg_dump -U latticegrid umich_latticegrid_development | bzip2 -9 > db/backup/lg_production-$(date '+%Y-%m-%d').sql.bz2
 
 # Run the DB scripts.  NOTE: This will need to run at a somewhat privileged level.
 echo "Pulling organizations..."
