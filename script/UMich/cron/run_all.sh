@@ -16,8 +16,8 @@ set -e
 set -o pipefail
 
 if [[ `date "+%d"` -eq $iday ]]; then
-	echo "Importing investigators..."
-	script/UMich/import_investigators_from_db.sh
+	echo "Importing investigators on $(date)"
+	script/UMich/import_investigators_from_db.sh 2>&1 >> log/import_investigators.log
 fi
 
 script/UMich/daily.sh
