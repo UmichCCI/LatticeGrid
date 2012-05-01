@@ -8,11 +8,11 @@
 # The monthly build task will run on this day (DD format):
 mday="07"
 
-script/UMich/daily.sh
+script/UMich/cron/daily.sh
 
 if [[ `date "+%d"` -eq $mday ]]; then
 	echo "Running monthlyBuild..."
-	script/UMich/monthly.sh
+	script/UMich/cron/monthly.sh
 fi
 
 # The cache script does output the time it starts, but that goes into cache.log not cron.log.
