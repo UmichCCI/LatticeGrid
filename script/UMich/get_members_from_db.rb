@@ -29,9 +29,9 @@ FasterCSV($stdout, :headers => file_headers, :col_sep => "\t", :write_headers =>
 		end
 
 		if row['assoc_name'] == 'Member'
-			apt_name = 'AssociateMember'
+			apt_name = 'NonCore'
 		elsif row['assoc_name'] = 'Core Member'
-			apt_name = 'Member'
+			apt_name = 'Core'
 		else
 			raise "Invalid association name: #{row['assoc_name']}."
 		end
