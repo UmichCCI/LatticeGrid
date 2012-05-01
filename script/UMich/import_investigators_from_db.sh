@@ -12,24 +12,25 @@
 # - restart servers
 # - backup db
 
+# If you hit Ctrl-C, the script exits as well as the subcommand.
 trap "echo Quitting; exit" INT
+
+# If any command fails, the script exits.
+set -e
+set -o pipefail
+
 
 echo "Beginning to import orgs and investigators on $(date)"
 
 # Run the DB scripts.  NOTE: This will need to run at a somewhat privileged level.
+echo "Pulling organizations..."
 ruby script/UMich/get_orgs_from_db.rb > db/imports/UMich/db_organizations.txt
 
-if [[ $? -ne 0 ]]; then
-	echo "Pulling orgs from the database was unsuccessful.  Exiting."
-	exit -1
-fi
-
+echo "Pulling investigators..."
 ruby script/UMich/get_members_from_db.rb > db/imports/UMich/db_members.txt
 
-if [[ $? -ne 0 ]]; then
-	echo "Pulling members from the database was unsuccessful.  Exiting."
-	exit -1
-fi
+echo "Running rake tasks..."
+set -x
 
 bundle exec rake importOrganizations file=db/imports/UMich/db_organizations.txt
 bundle exec rake purgeUnupdatedOrganizations
@@ -39,5 +40,6 @@ bundle exec rake cleanup:purgeOldMemberships
 
 bundle exec rake --trace insertAllAbstracts
 
+set +x
 # A nightlybuild should probably follow.  Whatever cron script is running this will take care of it.
 echo "Done importing things on $(date).  Remember to run nightlyBuild for the full effect."
