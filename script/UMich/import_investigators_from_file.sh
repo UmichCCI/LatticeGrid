@@ -21,10 +21,13 @@
 
 trap "echo Quitting; exit" INT
 
+set -e
+set -o pipefail
+
 if [ ! -f "db/imports/UMich/division_lookup.txt" ] || [ ! -f "db/imports/UMich/all_members.txt" ] \
 	|| [ ! -f "db/imports/UMich/core_members.txt" ]; then
 	echo "Did not find the three files we expected to find.  Aborting."
-	exit -1
+	exit 1
 fi
 
 ruby script/UMich/parse_members_from_files.rb "db/imports/UMich/all_members.txt" "db/imports/UMich/core_members.txt" "db/imports/UMich/member_output.txt"
