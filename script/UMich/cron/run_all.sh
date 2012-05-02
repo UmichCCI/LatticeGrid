@@ -33,3 +33,6 @@ fi
 
 # Cron will run the cache script next as a different user.
 echo "Main tasks finished on $(date).  Cache build is next."
+
+# If you were running this script as root and wanted to run the cache, here's what you'd do:
+# su --shell=/bin/bash --session-command='env PATH=/opt/ruby-enterprise-1.8.7-2012.02/bin/:$PATH script/UMich/cron/cache.sh' nobody 2>&1 > log/cache.log
