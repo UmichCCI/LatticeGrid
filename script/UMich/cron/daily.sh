@@ -7,7 +7,7 @@
 # On the production server, we use Ruby Enterprise Edition, which installs itself in /opt.
 
 # Sample crontab entry (if you're not using run_all.sh):
-# 10 1 * * * nobody (PATH=/opt/ruby-enterprise-1.8.7-2012.02/bin:$PATH; cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/daily.sh 2>&1 >> log/cron.log)
+# 10 1 * * * nobody (PATH=/opt/ruby-enterprise-1.8.7-2012.02/bin:$PATH; cd /var/www/apps/umich_latticegrid/ && script/UMich/cron/daily.sh >> log/cron.log 2>&1)
 
 # NOTE: If you run this file independently, you'll need to also call the cache script.
 
