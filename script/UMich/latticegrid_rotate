@@ -1,0 +1,12 @@
+/var/www/apps/umich_latticegrid/log/production.log /var/www/apps/umich_latticegrid/log/development.log {
+    create 666 adorack wheel
+    rotate 3
+    size 50M
+    missingok
+    notifempty
+    delaycompress
+    sharedscripts
+    postrotate
+        /etc/init.d/httpd reload > /dev/null 2>/dev/null || true
+    endscript
+}
