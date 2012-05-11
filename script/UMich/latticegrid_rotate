@@ -4,6 +4,7 @@
     size 50M
     missingok
     notifempty
+    compress
     delaycompress
     sharedscripts
     postrotate
