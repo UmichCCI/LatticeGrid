@@ -66,7 +66,7 @@ case
   when my_env == 'home': 'http'
   when my_env == 'development': 'http'
   when my_env == 'staging': 'http'
-  when my_env == 'production': 'http'
+  when my_env == 'production': 'https'
   else 'http'
 end 
 end
