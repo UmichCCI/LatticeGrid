@@ -6,8 +6,20 @@
     notifempty
     compress
     delaycompress
-    sharedscripts
-    postrotate
-        /etc/init.d/httpd reload > /dev/null 2>/dev/null || true
-    endscript
+    copytruncate
+    # sharedscripts
+    # postrotate
+    #     /etc/init.d/httpd reload > /dev/null 2>/dev/null || true
+    # endscript
+}
+
+/var/www/apps/umich_latticegrid/log/cron.log /var/www/apps/umich_latticegrid/log/import_investigators.log {
+    create 644 adorack wheel
+    rotate 3
+    size 50k
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
 }
