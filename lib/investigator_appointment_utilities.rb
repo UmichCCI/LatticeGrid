@@ -693,11 +693,16 @@ def UpdateHomeDepartmentAndTitle(pi)
 end
 
 def purgeInvestigators(investigators_to_purge)
+  rs = ReportState.instance
   investigators_to_purge.each do |pi|
     puts "marking investigator  #{pi.name} username #{pi.username} as deleted" if LatticeGridHelper.verbose?
     pi.deleted_at = 2.days.ago
     pi.end_date = 2.days.ago
     pi.save!
+
+    rs.investigator_record(pi.username, pi.first_name, pi.last_name, pi.middle_name)
+    rs.del_investigator(pi.username)
+
   end
 end
 
