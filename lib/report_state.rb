@@ -11,7 +11,7 @@ class ReportState
 	def initialize
 		@content = Hash.new do |h, k|
 			case k
-			when :new_inv, :del_inv, :pubmed_inv
+			when :new_inv, :del_inv, :pubmed_inv, :pubmed_limit_inv
 				h[k] = Array.new
 			when :new_papers, :new_valid_papers, :old_valid_papers, :new_invalid_papers, :old_invalid_papers
 				h[k] = Hash.new do |h2, k2|
@@ -50,6 +50,14 @@ class ReportState
 			:inv => inv,
 			:old_str => old_str,
 			:new_str => new_str,
+		}
+	end
+
+	def pubmed_limit_changed(inv, old_val, new_val)
+		@content[:pubmed_limit_inv] << {
+			:inv => inv,
+			:old_val => old_val,
+			:new_val => new_val,
 		}
 	end
 

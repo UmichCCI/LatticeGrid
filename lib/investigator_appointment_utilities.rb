@@ -4,6 +4,8 @@ require 'config' # cleanup_campus is in config
 require "#{RAILS_ROOT}/app/helpers/investigators_helper"
 include InvestigatorsHelper
 
+require 'report_state'
+
 def to_str(element)
   return "" if element.blank?
   return element.to_s.split(13.chr).join(', ')
@@ -101,6 +103,11 @@ def CreateInvestigatorFromHash(data_row)
         puts "unable to set home_department_id for #{data_row}" if LatticeGridHelper.verbose? and HasDepartment(data_row)
       end
       puts "New investigator: #{pi.first_name} #{pi.last_name}; username: #{pi.username}; email: #{pi.email}" if LatticeGridHelper.verbose?
+
+      rs = ReportState.instance
+      rs.investigator_record(pi.username, pi.first_name, pi.last_name, pi.middle_name)
+      rs.new_investigator(pi.username)
+
       pi.save!
     else
       # overwrite existing record ?
@@ -375,8 +382,23 @@ def MergeInvestigatorData(dest_pi, source_pi, overwrite)
   dest_pi.email               = DoOverwrite(dest_pi.email, source_pi.email, overwrite)
   dest_pi.employee_id         = DoOverwrite(dest_pi.employee_id, source_pi.employee_id, overwrite)
   dest_pi.home_department_id  = DoOverwrite(dest_pi.home_department_id, source_pi.home_department_id, overwrite)
+
+  orig_search_name = dest_pi.pubmed_search_name
+  orig_limit = dest_pi.pubmed_limit_to_institution
+
   dest_pi.pubmed_search_name  = DoOverwrite(dest_pi.pubmed_search_name, source_pi.pubmed_search_name, overwrite)
   dest_pi.pubmed_limit_to_institution = DoOverwrite(dest_pi.pubmed_limit_to_institution, source_pi.pubmed_limit_to_institution, overwrite)
+
+  rs = ReportState.instance
+
+  if dest_pi.pubmed_search_name != orig_search_name
+    rs.pubmed_changed(dest_pi.username, orig_search_name, dest_pi.pubmed_search_name)
+  end
+
+  if dest_pi.pubmed_limit_to_institution != orig_limit
+    rs.pubmed_limit_changed(dest_pi.username, orig_limit, dest_pi.pubmed_limit_to_institution)
+  end
+
   dest_pi = LatticeGridHelper.cleanup_campus(dest_pi)
   dest_pi
 end
