@@ -1,4 +1,5 @@
 require 'pubmed_config'
+require 'report_state'
 
 def limit_pubmed_search_to_institution(set_value=nil)
   if set_value.blank? and @local_limit_pubmed_search_to_institution.blank?
@@ -114,13 +115,21 @@ def FindPubMedIDs (all_investigators, options, number_years, debug=false, smart_
     end 
     # leaving perform_esearch
     investigator["entries"] = entries
+    rs = ReportState.instance
+    rs.investigator_record(investigator.username, investigator.first_name, investigator.last_name, investigator.middle_name)
     if entries.length < 1 then
       puts "No publications found for investigator #{investigator.first_name} #{investigator.last_name} using the keywords #{keywords}" if debug
+
+      rs.few_papers investigator.username, entries.length
     elsif entries.length > (LatticeGridHelper.expected_max_pubs_per_year*number_years) then
       puts "Too many hits??: #{entries.length} pubs for investigator #{investigator.first_name} #{investigator.last_name} using the keywords #{keywords} were found. RepeatCnt=#{repeatCnt}"
+
+      rs.excessive_papers investigator.username, entries.length
     elsif entries.length < number_years then
       puts "Too few found: #{entries.length} pubs for investigator #{investigator.first_name} #{investigator.last_name} using the keywords #{keywords} were found" if debug
       investigator["entries"] = entries
+
+      rs.few_papers investigator.username, entries.length
     else
       puts "#{entries.length} pubs for investigator #{investigator.first_name} #{investigator.last_name} using the keywords #{keywords} were found" if debug
       investigator["entries"] = entries
@@ -177,6 +186,7 @@ def InsertInvestigatorPublication(abstract_id, investigator_id, publication_date
   return if investigator_id.nil?
   thePIPub = InvestigatorAbstract.find(:first, 
            :conditions => ["abstract_id = :abstract_id and investigator_id = :investigator_id", {:abstract_id => abstract_id, :investigator_id => investigator_id} ] )
+  thePIPub['new_paper'] = false
   if thePIPub.nil? then
     begin 
        thePIPub = InvestigatorAbstract.create!(
@@ -188,6 +198,7 @@ def InsertInvestigatorPublication(abstract_id, investigator_id, publication_date
          :reviewed_ip     => "inserted from pubmed",
          :publication_date => publication_date
        )
+       thePIPub['new_paper'] = true
       rescue ActiveRecord::RecordInvalid
        if thePIPub.nil? then # something bad happened
          puts "InsertInvestigatorPublication: unable to either insert or find a reference with the abstract_id '#{abstract_id}' and the investigator_id '#{investigator_id}'"

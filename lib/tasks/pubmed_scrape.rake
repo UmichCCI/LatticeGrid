@@ -8,6 +8,7 @@ require 'pubmed_config' #look here to change the default time spans
 require 'pubmedext' #my extensions to grab other dates and full author names
 #require 'tasks/obo_parser'
 #require 'tasks/tree_traversal'
+require 'report_state'
 
 require 'rubygems'
 
@@ -16,22 +17,33 @@ def do_insert_abstracts
     thisLoad = LoadDate.new(:load_date=> Time.now)
     thisLoad.save
     puts "investigator.mark_pubs_as_valid is #{(@AllInvestigators[0].mark_pubs_as_valid || limit_pubmed_search_to_institution())}"
+
+    rs = ReportState.instance
     row_iterator(@AllInvestigators) {  |investigator|
+      rs.investigator_record(investigator.username, investigator.first_name, investigator.last_name, investigator.middle_name)
       if !investigator.publications.nil? then
         investigator.publications.each do |publication|
+          new_paper = false
           abstract = InsertPublication(publication)
           if abstract.id > 0 then
             thePIPub = InsertInvestigatorPublication( abstract.id, investigator.id, (abstract.publication_date||abstract.electronic_publication_date||abstract.deposited_date), IsFirstAuthor(abstract,investigator), IsLastAuthor(abstract,investigator), (investigator.mark_pubs_as_valid || limit_pubmed_search_to_institution()) )
+
+            if thePIPub['new_paper']  # Custom extension.
+              rs.new_paper(investigator.username)
+              new_paper = true
+            end
             # check to see if we should set as valid if it has not been reviewed!
             if (investigator.mark_pubs_as_valid || limit_pubmed_search_to_institution()) and ! thePIPub.is_valid 
               if (thePIPub.last_reviewed_at.blank? || thePIPub.last_reviewed_id == 0) and (thePIPub.last_reviewed_ip.blank? or thePIPub.last_reviewed_ip =~ /abstract|migration/i ) then
                 thePIPub.is_valid = true
                 thePIPub.save!
+                rs.valid_paper(investigator.username, new_paper)
               end
             elsif (!investigator.mark_pubs_as_valid) and thePIPub.is_valid 
               if (thePIPub.last_reviewed_id.blank? or thePIPub.last_reviewed_id < 1) and (thePIPub.last_reviewed_ip.blank? or thePIPub.last_reviewed_ip =~ /abstract|migration/i ) then
                 thePIPub.is_valid = false
                 thePIPub.save!
+                rs.invalid_paper(investigator.username, new_paper)
               end
             end
             if thePIPub.is_valid and abstract.is_valid == false and (abstract.last_reviewed_id.blank? or abstract.last_reviewed_id < 1) and (abstract.last_reviewed_ip.blank? or abstract.last_reviewed_ip =~ /abstract|migration/i ) then
