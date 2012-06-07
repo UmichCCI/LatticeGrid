@@ -32,6 +32,11 @@ ruby script/UMich/get_orgs_from_db.rb > db/imports/UMich/db_organizations.txt
 echo "Pulling investigators..."
 ruby script/UMich/get_members_from_db.rb > db/imports/UMich/db_members.txt
 
+if [ ! -s db/imports/UMich/db_organizations.txt ] || [ ! -s db/imports/UMich/db_members.txt ]; then
+	echo "Import from DB failed.  Zero-length import files."
+	exit 1
+fi
+
 echo "Running rake tasks..."
 set -x
 
