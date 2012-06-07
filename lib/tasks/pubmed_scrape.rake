@@ -23,12 +23,12 @@ def do_insert_abstracts
       rs.investigator_record(investigator.username, investigator.first_name, investigator.last_name, investigator.middle_name)
       if !investigator.publications.nil? then
         investigator.publications.each do |publication|
-          new_paper = false
           abstract = InsertPublication(publication)
           if abstract.id > 0 then
             thePIPub = InsertInvestigatorPublication( abstract.id, investigator.id, (abstract.publication_date||abstract.electronic_publication_date||abstract.deposited_date), IsFirstAuthor(abstract,investigator), IsLastAuthor(abstract,investigator), (investigator.mark_pubs_as_valid || limit_pubmed_search_to_institution()) )
 
-            if thePIPub['new_paper']  # Custom extension.
+            new_paper = false
+            if thePIPub.created_at > 1.day.ago
               rs.new_paper(investigator.username)
               new_paper = true
             end
@@ -85,14 +85,25 @@ task :getPIAbstracts => :getPubmedIDs do
 end
 
 task :insertAbstracts => :getPIAbstracts do
-  # load the test data
-  do_insert_abstracts()
-  if LatticeGridHelper.global_limit_pubmed_search_to_institution?() == false then
-    #repeat with limited to institution and trust the results
-    limit_pubmed_search_to_institution(true)
-    get_pubmed_ids()
-    get_pi_abstracts()
+  begin
+    # load the test data
     do_insert_abstracts()
+    if LatticeGridHelper.global_limit_pubmed_search_to_institution?() == false then
+      #repeat with limited to institution and trust the results
+      limit_pubmed_search_to_institution(true)
+      get_pubmed_ids()
+      get_pi_abstracts()
+      do_insert_abstracts()
+    end
+  rescue
+    rs = ReportState.instance
+    rs.exception $!
+    raise
+  ensure
+    rs = ReportState.instance
+
+    # Last ReportState record--finalize it.
+    rs.write_state(true)
   end
 end
 

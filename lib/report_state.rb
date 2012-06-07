@@ -20,7 +20,7 @@ class ReportState
 				end
 			when :usernames, :warnings
 				h[k] = {}
-			when :ruby_exceptions
+			when :ruby_exception, :exception_backtrace
 				h[k] = nil
 			when :finalized
 				h[k] = false
@@ -31,7 +31,15 @@ class ReportState
 
 		if File.exists? state_file
 			YAML.load_file(state_file).each_pair do |k, v|
-				@content[k] = v
+				if v.is_a? Hash
+					# Special processing to allow for the nested special hashes.
+					# May need to change this if the hash depth increases.
+					v.each_pair do |k2, v2|
+						@content[k][k2] = v2
+					end
+				else
+					@content[k] = v
+				end
 			end
 		end
 	end
@@ -85,11 +93,16 @@ class ReportState
 	end
 
 	def few_papers(inv, count)
-		@content[:warnings][inv] = "Found #{count} papers, which seems like too few.  Inserted them anyway."
+		@content[:warnings][inv] = "Found #{count} paper(s), which seems like too few.  Inserted anyway."
 	end
 
 	def excessive_papers(inv, count)
 		@content[:warnings][inv] = "Found #{count} papers, which seems excessive.  Inserted none."
+	end
+
+	def exception(e)
+		@content[:ruby_exception] = e.to_s
+		@content[:exception_backtrace] = e.backtrace
 	end
 
 	def write_state(finalize = false)

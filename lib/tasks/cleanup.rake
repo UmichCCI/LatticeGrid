@@ -1,4 +1,5 @@
 require 'investigator_appointment_utilities'
+require 'report_state'
 
 namespace :cleanup do
   
@@ -434,9 +435,18 @@ namespace :cleanup do
   end
 
   task :purgeUnupdatedFaculty => :environment do
-     block_timing("cleanup:purgeUnupdatedFaculty") {
+    begin
+      block_timing("cleanup:purgeUnupdatedFaculty") {
         prune_unupdated_faculty()
-     }
+      }
+    rescue
+      rs = ReportState.instance
+      rs.exception $!
+      raise
+    ensure
+      rs = ReportState.instance
+      rs.write_state
+    end
   end
 
   task :cleanInvestigatorsUsername => :environment do

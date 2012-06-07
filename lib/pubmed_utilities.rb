@@ -186,7 +186,6 @@ def InsertInvestigatorPublication(abstract_id, investigator_id, publication_date
   return if investigator_id.nil?
   thePIPub = InvestigatorAbstract.find(:first, 
            :conditions => ["abstract_id = :abstract_id and investigator_id = :investigator_id", {:abstract_id => abstract_id, :investigator_id => investigator_id} ] )
-  thePIPub['new_paper'] = false
   if thePIPub.nil? then
     begin 
        thePIPub = InvestigatorAbstract.create!(
@@ -198,7 +197,6 @@ def InsertInvestigatorPublication(abstract_id, investigator_id, publication_date
          :reviewed_ip     => "inserted from pubmed",
          :publication_date => publication_date
        )
-       thePIPub['new_paper'] = true
       rescue ActiveRecord::RecordInvalid
        if thePIPub.nil? then # something bad happened
          puts "InsertInvestigatorPublication: unable to either insert or find a reference with the abstract_id '#{abstract_id}' and the investigator_id '#{investigator_id}'"

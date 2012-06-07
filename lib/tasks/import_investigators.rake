@@ -1,6 +1,7 @@
 require 'pubmed_config' #look here to change the default time spans
 require 'file_utilities' #specific methods
 require 'utilities' #specific methods
+require 'report_state'
 
 require 'rubygems'
 require 'pathname'
@@ -29,8 +30,17 @@ task :cleanUpOrganizations => :environment do
 end
 
 task :importInvestigators => :environment do
-  read_file_handler("importInvestigators" ) {|filename| ReadInvestigatorData(filename)}
-  InvestigatorLoadDate.new(:load_date=> Time.now).save
+  begin
+    read_file_handler("importInvestigators" ) {|filename| ReadInvestigatorData(filename)}
+    InvestigatorLoadDate.new(:load_date=> Time.now).save
+  rescue
+    rs = ReportState.instance
+    rs.exception $!
+    raise
+  ensure
+    rs = ReportState.instance
+    rs.write_state
+  end
 end
 
 task :importJointAppointments => :environment do
