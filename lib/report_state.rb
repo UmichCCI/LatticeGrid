@@ -1,12 +1,13 @@
 require 'yaml'
 require 'singleton'
+require 'date'
 
 class ReportState
 	include Singleton
 	# This maintains the YAML state file across scraping.
 	# Eventually, it's serialized into a hash for processing by the actionmailer.
 
-	STATE_FILE = 'db/imports/UMich/import_state.yml'
+	STATE_ROOT = 'db/imports/UMich/'
 
 	def initialize
 		@content = Hash.new do |h, k|
@@ -17,17 +18,19 @@ class ReportState
 				h[k] = Hash.new do |h2, k2|
 					h2[k2] = 0  # I think I might just be able to use the shorthand, but whatever.
 				end
-			when :warnings
+			when :usernames, :warnings
 				h[k] = {}
-			when :usernames
+			when :ruby_exceptions
 				h[k] = nil
+			when :finalized
+				h[k] = false
 			else
 				raise "Unrecognized key: #{k.inspect}."
 			end
 		end
 
-		if File.exists? STATE_FILE
-			YAML.load_file(STATE_FILE).each_pair do |k, v|
+		if File.exists? state_file
+			YAML.load_file(state_file).each_pair do |k, v|
 				@content[k] = v
 			end
 		end
@@ -89,10 +92,17 @@ class ReportState
 		@content[:warnings][inv] = "Found #{count} papers, which seems excessive.  Inserted none."
 	end
 
-	def write_state
-		File.open(STATE_FILE, 'w') do |f|
+	def write_state(finalize = false)
+		@content[:finalized] = finalize
+		File.open(state_file, 'w') do |f|
 			f.write @content.to_yaml
 		end
+	end
+
+	private
+
+	def state_file
+		@statefile ||= STATE_ROOT + 'import_state-%s.yaml' % [Date.today.to_s]
 	end
 
 end
