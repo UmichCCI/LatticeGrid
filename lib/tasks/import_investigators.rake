@@ -30,16 +30,9 @@ task :cleanUpOrganizations => :environment do
 end
 
 task :importInvestigators => :environment do
-  begin
+  ReportState.ensure_write do
     read_file_handler("importInvestigators" ) {|filename| ReadInvestigatorData(filename)}
     InvestigatorLoadDate.new(:load_date=> Time.now).save
-  rescue
-    rs = ReportState.instance
-    rs.exception $!
-    raise
-  ensure
-    rs = ReportState.instance
-    rs.write_state
   end
 end
 

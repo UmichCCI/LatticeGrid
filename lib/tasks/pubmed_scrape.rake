@@ -85,7 +85,8 @@ task :getPIAbstracts => :getPubmedIDs do
 end
 
 task :insertAbstracts => :getPIAbstracts do
-  begin
+  # Last thing that needs to be reported, so if this goes through, mark it finalized.
+  ReportState.ensure_write(true) do
     # load the test data
     do_insert_abstracts()
     if LatticeGridHelper.global_limit_pubmed_search_to_institution?() == false then
@@ -95,15 +96,6 @@ task :insertAbstracts => :getPIAbstracts do
       get_pi_abstracts()
       do_insert_abstracts()
     end
-  rescue
-    rs = ReportState.instance
-    rs.exception $!
-    raise
-  ensure
-    rs = ReportState.instance
-
-    # Last ReportState record--finalize it.
-    rs.write_state(true)
   end
 end
 

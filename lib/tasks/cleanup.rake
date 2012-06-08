@@ -423,17 +423,10 @@ namespace :cleanup do
   end
 
   task :purgeOldMemberships => :environment do
-    begin
+    ReportState.ensure_write do
       block_timing("cleanup:purgeOldMemberships") {
         prune_program_memberships_not_updated()
       }
-    rescue
-      rs = ReportState.instance
-      rs.exception $!
-      raise
-    ensure
-      rs = ReportState.instance
-      rs.write_state
     end
   end
 
@@ -444,17 +437,10 @@ namespace :cleanup do
   end
 
   task :purgeUnupdatedFaculty => :environment do
-    begin
+    ReportState.ensure_write do
       block_timing("cleanup:purgeUnupdatedFaculty") {
         prune_unupdated_faculty()
       }
-    rescue
-      rs = ReportState.instance
-      rs.exception $!
-      raise
-    ensure
-      rs = ReportState.instance
-      rs.write_state
     end
   end
 

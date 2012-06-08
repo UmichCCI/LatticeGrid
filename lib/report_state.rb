@@ -9,6 +9,22 @@ class ReportState
 
 	STATE_ROOT = 'db/imports/UMich/'
 
+	class << self
+
+		def ensure_write(finalize = false)
+			begin
+				yield
+			rescue
+				ReportState.instance.exception $!
+				finalize = false  # It didn't actually make it through.
+				raise
+			ensure
+				ReportState.instance.write_state(finalize)
+			end
+		end
+
+	end
+
 	def initialize
 		@content = Hash.new do |h, k|
 			case k
