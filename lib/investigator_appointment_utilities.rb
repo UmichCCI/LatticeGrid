@@ -86,6 +86,7 @@ def CreateInvestigatorFromHash(data_row)
   pi = SetInvestigatorAddress(pi,data_row)
 
   member_type = HandleMemberType(data_row)
+  rs = ReportState.instance
   
   if pi.username.blank? then
     puts "investigator #{pi.first_name} #{pi.last_name} does not have a username"
@@ -104,7 +105,6 @@ def CreateInvestigatorFromHash(data_row)
       end
       puts "New investigator: #{pi.first_name} #{pi.last_name}; username: #{pi.username}; email: #{pi.email}" if LatticeGridHelper.verbose?
 
-      rs = ReportState.instance
       rs.investigator_record(pi.username, pi.first_name, pi.last_name, pi.middle_name)
       rs.new_investigator(pi.username)
 
@@ -145,6 +145,8 @@ def CreateInvestigatorFromHash(data_row)
       if membership.blank?
         puts "Membership of #{pi.name} in #{theProgram.name} created" if LatticeGridHelper.verbose?
         member_type.create :organizational_unit_id => theProgram.id, :investigator_id => pi.id, :start_date => Time.now
+        rs.investigator_record(pi.username, pi.first_name, pi.last_name, pi.middle_name)
+        rs.new_affiliation(pi.username, theProgram.name)
       else
         puts "Membership of #{pi.name} in #{theProgram.name} updated" if LatticeGridHelper.debug?
         membership.end_date = nil
@@ -390,6 +392,7 @@ def MergeInvestigatorData(dest_pi, source_pi, overwrite)
   dest_pi.pubmed_limit_to_institution = DoOverwrite(dest_pi.pubmed_limit_to_institution, source_pi.pubmed_limit_to_institution, overwrite)
 
   rs = ReportState.instance
+  rs.investigator_record(dest_pi.username, dest_pi.first_name, dest_pi.last_name, dest_pi.middle_name)
 
   if dest_pi.pubmed_search_name != orig_search_name
     rs.pubmed_changed(dest_pi.username, orig_search_name, dest_pi.pubmed_search_name)
@@ -618,6 +621,21 @@ def prune_program_memberships_not_updated()
       puts "deleting membership entry for #{membership.investigator.name} username #{membership.investigator.username} in deleted program #{membership.organizational_unit_id}" if LatticeGridHelper.verbose? and !membership.investigator.nil? and membership.organizational_unit.nil?
       membership.end_date = 1.day.ago
       membership.save! 
+
+      rs = ReportState.instance
+      if membership.investigator.nil?
+        inv = Investigator.find_by_id_including_deleted(membership.investigator_id)
+        if inv.nil?
+          inv = Investigator.new(:username => 'unknown', :first_name => 'k', :last_name => 'u', :middle_name => '')
+        end
+      else
+        inv = membership.investigator
+      end
+
+      rs.investigator_record(inv.username, inv.first_name, inv.last_name, inv.middle_name)
+
+      unit_name = membership.organizational_unit.nil? ? '<deleted unit>' : membership.organizational_unit.name
+      rs.del_affiliation(inv.username, unit_name)
     end
   end
 end

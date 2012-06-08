@@ -18,6 +18,10 @@ class ReportState
 				h[k] = Hash.new do |h2, k2|
 					h2[k2] = 0  # I think I might just be able to use the shorthand, but whatever.
 				end
+			when :new_aff, :del_aff
+				h[k] = Hash.new do |h2, k2|
+					h2[k2] = []
+				end
 			when :usernames, :warnings
 				h[k] = {}
 			when :ruby_exception, :exception_backtrace
@@ -54,6 +58,14 @@ class ReportState
 
 	def del_investigator(inv)
 		@content[:del_inv] << inv
+	end
+
+	def new_affiliation(inv, aff)
+		@content[:new_aff][inv] << aff
+	end
+
+	def del_affiliation(inv, aff)
+		@content[:del_aff][inv] << aff
 	end
 
 	def pubmed_changed(inv, old_str, new_str)

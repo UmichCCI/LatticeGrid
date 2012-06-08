@@ -193,6 +193,12 @@ has_many :investigator_appointments,
     end
   end
 
+  def self.find_by_id_including_deleted( val )
+    with_exclusive_scope do
+        find_by_id(val)
+    end
+  end
+
   def self.has_basis_without_connections(basis)
     all(:conditions=>["investigators.appointment_basis = :basis and (not exists(select 'x' from investigator_abstracts where investigator_abstracts.investigator_id = investigators.id and investigator_abstracts.is_valid = true) and not exists(select 'x' from investigator_studies where investigator_studies.investigator_id = investigators.id) and not exists(select 'x' from investigator_proposals where investigator_proposals.investigator_id = investigators.id) )", {:basis=>basis}] )
   end

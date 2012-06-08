@@ -423,9 +423,18 @@ namespace :cleanup do
   end
 
   task :purgeOldMemberships => :environment do
-     block_timing("cleanup:purgeOldMemberships") {
+    begin
+      block_timing("cleanup:purgeOldMemberships") {
         prune_program_memberships_not_updated()
-     }
+      }
+    rescue
+      rs = ReportState.instance
+      rs.exception $!
+      raise
+    ensure
+      rs = ReportState.instance
+      rs.write_state
+    end
   end
 
   task :countFacultyUpdates => :environment do
