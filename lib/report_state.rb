@@ -121,7 +121,11 @@ class ReportState
 	end
 
 	def few_papers(inv, count)
-		@content[:warnings][inv] = "Found #{count} paper(s), which seems like too few.  Inserted anyway."
+		if count == 0
+			@content[:warnings][inv] = "Didn't find any papers."
+		else
+			@content[:warnings][inv] = "Found #{count} paper(s), which seems like too few.  Inserted anyway."
+		end
 	end
 
 	def excessive_papers(inv, count)
