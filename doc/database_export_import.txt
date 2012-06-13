@@ -1,5 +1,11 @@
+# export password
+Bcdatabase.load[:pprod, :rhlccc_latticegrid]['password']
+
 scp wakibbe@enotis.nubic.northwestern.edu:/home/wakibbe/enotis/tmp/study_roles_2012-03-14.csv study_roles_2012-03-14.csv
 scp wakibbe@enotis.nubic.northwestern.edu:/home/wakibbe/enotis/tmp/studies_2012-03-14.csv studies_2012-03-14.csv
+
+scp study_roles_20120426.csv wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/apps/cancerpublications/db/imports/Feinberg/private/study_roles_20120426.csv
+scp studies_20120426.csv wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/apps/cancerpublications/db/imports/Feinberg/private/studies_20120426.csv 
 
 # export all, reimport as a UTF8 postgres database
 
@@ -10,6 +16,24 @@ pg_dump -E utf8 -Fc stanford_latticegrid -U latticegrid > stanford_latticegrid_2
 pg_dump -E utf8 -Fc health_locator -U health_locator > health_locator_20120322.dmp
 pg_dump -E utf8 -Fc isb_colleagues -U isb_colleagues > isb_colleagues_20120322.dmp
 pg_dump -E utf8 -Fc nucats_assist -U nucats_assist > nucats_assist_20120322.dmp
+
+
+pg_dump -Fc rhlccc_latticegrid -U latticegrid -h pprod2 > rhlccc_latticegrid_20120604.dmp
+scp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/rhlccc_latticegrid_20120604.dmp   rhlccc_latticegrid_20120604.dmp 
+pg_restore -d rhlccc_latticegrid -U latticegrid rhlccc_latticegrid_20120604.dmp
+
+
+pg_dump -Fc fsm_latticegrid -U latticegrid > fsm_latticegrid_20120426.dmp
+scp fsm_latticegrid_20120426.dmp wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/fsm_latticegrid_20120426.dmp  
+pg_restore -d fsm_latticegrid -U latticegrid -h pprod2 fsm_latticegrid_20120426.dmp
+
+# award and study data
+
+scp db/imports/Feinberg/private/award_data_20120426.txt wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/apps/cancerpublications/db/imports/Feinberg/private/award_data_20120426.txt  
+
+scp db/imports/Feinberg/private/studies_20120426.csv wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/apps/cancerpublications/db/imports/Feinberg/private/studies_20120426.csv  
+
+scp db/imports/Feinberg/private/study_roles_20120426.csv wakibbe@rails-prod2.nubic.northwestern.edu:/home/wakibbe/apps/cancerpublications/db/imports/Feinberg/private/study_roles_20120426.csv  
 
 # initdb with UTF8
 initdb -E UTF8 -D /Users/_wakibbe/pgdata
@@ -76,6 +100,14 @@ pg_dump -Fc cinj_latticegrid_staging -U rhlccc_latticegrid -h pstage > cinjpubli
 
 # from my laptop
 
+pg_dump -Fc ccne_latticegrid -U latticegrid > ccne_latticegrid_20120423.dmp
+scp ccne_latticegrid_20120423.dmp wakibbe@rails-staging2.nubic.northwestern.edu:/home/wakibbe/
+#run console
+script/console staging
+Bcdatabase.load[:pstage, :ccne_latticegrid]['password']
+pg_restore -d ccne_latticegrid -U latticegrid -h pstage2 ccne_latticegrid_20120423.dmp
+
+
 pg_dump -Fc ucsf_latticegrid -U latticegrid > ucsf_latticegrid_20111110.dmp
 
 pg_dump -Fc stanford_latticegrid -U latticegrid > stanford_latticegrid_20111109.dmp
@@ -100,6 +132,8 @@ pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev
 pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20110825.dmp
 
 pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20111210.dmp
+
+pg_dump -Fc fsmpublications_development -U fsmpublications > fsmpublications_dev_20120427.dmp
 
 pg_dump -E UTF8 -Fc fsm_latticegrid -U latticegrid > fsmpublications_dev_20120315.dmp
 pg_dump -Fc fsm_latticegrid -U latticegrid > fsmpublications_dev_20120315.dmp

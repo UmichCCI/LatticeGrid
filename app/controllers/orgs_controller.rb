@@ -133,6 +133,20 @@ class OrgsController < ApplicationController
     end
   end
 
+  def orgs
+    @units = OrganizationalUnit.find(:all, :order => "sort_order, lower(abbreviation)", :include => [:members,:organization_abstracts, :primary_faculty, :joint_faculty, :secondary_faculty])
+    @heading = "Current #{LatticeGridHelper.affilation_name} Listing"
+    if LatticeGridHelper.affilation_name != "Department"
+      @show_associated_faculty = false
+      @show_members = false
+      @show_unit_type = false
+    end
+    respond_to do |format|
+      format.html { render :action => :index }
+      format.xml  { render :xml => @units }
+    end
+  end
+
   def departments
     @units = Department.find(:all, :order => "sort_order, lower(abbreviation)", :include => [:members,:organization_abstracts, :primary_faculty, :joint_faculty, :secondary_faculty])
     @heading = "Current #{LatticeGridHelper.affilation_name} Listing"
@@ -499,7 +513,6 @@ class OrgsController < ApplicationController
     @heading = "#{@abstracts.length} publications. Selected publications  "
     @heading = @heading + " from #{@start_date} " if !params[:start_date].blank?
     @heading = @heading + " to #{@end_date}" if !params[:end_date].blank?
-    @heading = @heading + " <br/>Investigators explicitly included: #{@faculty.collect{|pi| pi.name unless pi.blank?}.uniq.join(', ')}" if @faculty.length > 0
     @include_mesh = false
     @include_graph_link = false
     @show_paginator = false

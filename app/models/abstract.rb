@@ -28,6 +28,7 @@ class Abstract < ActiveRecord::Base
   named_scope :abstracts_last_five_years, 
         :conditions => ['abstracts.publication_date >= :start_date', 
           {:start_date => 5.years.ago }]
+
   named_scope :abstracts_by_date, lambda { |*dates|
       {:conditions => 
           [' abstracts.publication_date between :start_date and :end_date ', 
@@ -48,6 +49,10 @@ class Abstract < ActiveRecord::Base
   named_scope :ccsg_abstracts, 
       :conditions => ['abstracts.is_cancer = true']
 
+  named_scope :recently_changed, 
+       :conditions => ['abstracts.updated_at >= :recent_date',  {:recent_date => 30.days.ago }],
+      :order => "abstracts.updated_at DESC"
+
   named_scope :exclude_letters, 
         :conditions => ['lower(abstracts.publication_type) NOT IN (:publication_types)', 
           {:publication_types=> ["dictionary", "introductory journal article", "interview", "bibliography", "retraction of publication", "english abstract", "newspaper article", "letter", "lectures", "interactive tutorial", "news", "letter", "guideline", "editorial", "consensus development conference", "historical article", "duplicate publication", "biography", "addresses", "video-audio media", "comment", "congresses", "editorial", "clinical conference"] }]
@@ -57,7 +62,7 @@ class Abstract < ActiveRecord::Base
     }
   named_scope :by_investigator_ids, lambda { |*ids|
       { :joins => [:investigator_abstracts],
-        :conditions => ['investigator_abstracts.investigator_id IN (:investigator_ids) ', {:investigator_ids => ids.first}] }
+        :conditions => ['investigator_abstracts.investigator_id IN (:investigator_ids) AND investigator_abstracts.is_valid = true', {:investigator_ids => ids.first}] }
     }
   default_scope :conditions => 'abstracts.is_valid = true'
 
@@ -72,6 +77,15 @@ class Abstract < ActiveRecord::Base
       self.full_authors.split(/\n|\r/)
     else
       self.authors.split(/\n|\r/)
+    end
+  end
+
+  def self.recently_changed_unvalidated
+    with_exclusive_scope do
+      all(
+        :conditions => ["abstracts.updated_at >= :recent_date and (abstracts.is_valid = false or exists(select 'x' from investigator_abstracts where abstracts.id = investigator_abstracts.abstract_id and investigator_abstracts.is_valid = false and investigator_abstracts.reviewed_at is null ) )", 
+          {:recent_date => 90.days.ago }],
+        :order => "abstracts.updated_at DESC")
     end
   end
 

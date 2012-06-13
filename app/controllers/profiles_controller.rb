@@ -1,6 +1,6 @@
 class ProfilesController < ApplicationController
 
-  caches_page( :show, :show_pubs, :ccsg ) if LatticeGridHelper.CachePages()
+  caches_page( :show, :show_pubs ) if LatticeGridHelper.CachePages()
   caches_action( :list_summaries )  if LatticeGridHelper.CachePages()
   before_filter :check_login
   after_filter  :log_request, :except => [:login, :welcome, :splash, :show_pubs, :edit, :edit_pubs, :ccsg]
@@ -221,6 +221,35 @@ class ProfilesController < ApplicationController
     end
   end
 
+  def recent
+    @abstracts = Abstract.recently_changed 
+    @include_pubmed_id = true 
+    @include_collab_marker = false
+    @include_investigators = true
+    @show_valid_checkboxes = true 
+    @link_abstract_to_pubmed = true
+    @include_impact_factor = false
+    @include_updated_at = true
+    @simple_links = false
+    @speed_display = false
+    @heading = "Recently changed publication abstracts (#{@abstracts.length})"
+    render :action => 'investigator_listing'
+  end
+    
+  def recent_unvalidated
+    @abstracts = Abstract.recently_changed_unvalidated 
+    @include_pubmed_id = true 
+    @include_collab_marker = false
+    @include_investigators = true
+    @show_valid_checkboxes = true 
+    @link_abstract_to_pubmed = true
+    @include_impact_factor = true
+    @include_updated_at = true
+    @simple_links = true
+    @heading = "Recently changed publication abstracts without validation (#{@abstracts.length})"
+    render :action => 'investigator_listing'
+  end
+  
   def edit_pubs
     @username = (is_admin? ? params[:id] : current_user_model.username)
     @pronoun  = (is_admin? ? "" : " Your ")
@@ -300,6 +329,36 @@ class ProfilesController < ApplicationController
       format.html { render }
     end
   end
+
+  def reminder
+    if params[:id].nil? or not is_admin? then
+      redirect_to( current_abstracts_url)
+    else
+      handle_member_name(false)
+      if @investigator.blank?
+        redirect_to( current_abstracts_url)
+      else
+        respond_to do |format|
+          begin
+            #@investigator.email
+            Notifier.deliver_reminder_message(@investigator.last_name, @investigator.email, "mruchin@northwestern.edu",
+                'Please approve your Lurie Cancer Center LatticeGrid profile', show_investigator_url(:id=>@investigator.username, :page=>1),
+                profiles_url(), profile_url(@investigator.username), edit_pubs_profile_url(@investigator.username), 
+                @investigator.investigator_abstracts.count, @investigator.abstracts.count, @investigator.faculty_research_summary )
+  		
+          rescue Exception => err
+            logger.error "Error occured. Unable to send notification email to #{@investigator.name} at #{@investigator.email}. Error: #{err.message}"
+            pass = false
+          end
+
+          flash[:notice] = "Reminder was successfully sent to #{@investigator.name}."
+          format.html { redirect_to(splash_profiles_path) }
+          format.xml  { head :ok }
+        end
+      end
+    end
+  end
+
 
   private
 

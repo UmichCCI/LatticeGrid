@@ -45,9 +45,13 @@ def CreateStudyFromHash(data_row)
   s.title =  data_row['title']
   s.abstract =  data_row['description']
   # clean out the non-ASCII characters
-  s.title = CleanNonUTFtext(s.title)
-  s.abstract = CleanNonUTFtext(s.abstract)
-  
+  begin
+    s.title = CleanNonUTFtext(s.title)
+    s.abstract = CleanNonUTFtext(s.abstract)
+  rescue Exception => err
+    puts "CleanNonUTFtext failed for #{data_row.inspect} with error #{err.message}"
+    puts "s.title is #{s.title.length} and s.abstract is #{s.abstract.length} characters."
+  end
   s.enotis_study_id =  data_row['study_id']
   s.research_type =  data_row['research_type']
   s.review_type =  data_row['review_type_requested']
@@ -207,7 +211,9 @@ end
 def complain_not_equal(new_rec, old_rec, attr_name, replace=true)
   return if new_rec.blank? or new_rec[attr_name].blank? 
   return if new_rec[attr_name] == old_rec[attr_name] 
-  puts "new #{attr_name} not the same as the old: new #{new_rec[attr_name]}; old: #{old_rec[attr_name]}" if  ! old_rec[attr_name].blank?
+  if  ! old_rec[attr_name].blank? and  (new_rec[attr_name].class.to_s !~ /string/i or new_rec[attr_name].length < 50)
+    puts "new #{attr_name} not the same as the old: new #{new_rec[attr_name]}; old: #{old_rec[attr_name]}"
+  end
   if replace
     do_replace(old_rec, attr_name, new_rec[attr_name] )
   end

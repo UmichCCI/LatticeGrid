@@ -8,6 +8,10 @@ module LatticeGrid
           'Feinberg'
         when /cancer/i
           'RHLCCC'
+        when /rhlccc/i
+          'RHLCCC'
+        when /ccne/i
+          'CCNE'
         when /umich/i
           'UMich'
         when /uwisc/i

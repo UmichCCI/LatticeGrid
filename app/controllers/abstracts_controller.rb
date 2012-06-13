@@ -14,17 +14,13 @@ class AbstractsController < ApplicationController
   def index
     year = handle_year()
     redirect_to abstracts_by_year_url(:id => year, :page => '1')
+    #redirect_to current_abstracts_url
   end
   
   def current
-    params[:id]=LatticeGridHelper.year_array[0].to_s
-    pre_list(params[:id])
-    @abstracts = Abstract.display_data( params[:id], params[:page] )
-    list_heading(params[:id])
-    @do_pagination = "1"
-    render :action => 'year_list'
+    index
   end
-  
+
   def journal_list
     params[:page]||=1
     pre_list(1)
@@ -326,12 +322,9 @@ class AbstractsController < ApplicationController
     @heading = "Publication Listing for <i>#{journal_name}</i>  (#{total_entries} publications)"
   end
 
-  def list_heading(year)
-    # tags do not seem to be necessary
-#    @tags = Abstract.tag_counts(:limit => 150, :order => "count desc", 
-#                  :conditions => ["abstracts.year in (:year)", {:year=>year }])
+  def list_heading(tag)
     total_entries = total_length(@abstracts) 
-    @heading = "Publication Listing for #{year}  (#{total_entries} publications)"
+    @heading = "Publication Listing for #{tag} (#{total_entries} publications)"
   end
   
   def tag_heading(tag_name, abstracts)

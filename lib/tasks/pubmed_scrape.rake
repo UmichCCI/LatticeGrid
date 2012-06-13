@@ -24,7 +24,7 @@ def do_insert_abstracts
       if !investigator.publications.nil? then
         investigator.publications.each do |publication|
           abstract = InsertPublication(publication)
-          if abstract.id > 0 then
+          unless abstract.blank? or abstract.id.blank? or abstract.id < 1 then
             thePIPub = InsertInvestigatorPublication( abstract.id, investigator.id, (abstract.publication_date||abstract.electronic_publication_date||abstract.deposited_date), IsFirstAuthor(abstract,investigator), IsLastAuthor(abstract,investigator), (investigator.mark_pubs_as_valid || limit_pubmed_search_to_institution()) )
 
             new_paper = false
