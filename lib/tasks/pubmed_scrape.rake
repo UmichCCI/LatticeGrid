@@ -28,7 +28,7 @@ def do_insert_abstracts
             thePIPub = InsertInvestigatorPublication( abstract.id, investigator.id, (abstract.publication_date||abstract.electronic_publication_date||abstract.deposited_date), IsFirstAuthor(abstract,investigator), IsLastAuthor(abstract,investigator), (investigator.mark_pubs_as_valid || limit_pubmed_search_to_institution()) )
 
             new_paper = false
-            if thePIPub.created_at > 1.day.ago
+            if thePIPub.created_at.to_date == Date.today
               rs.new_paper(investigator.username)
               new_paper = true
             end
@@ -38,12 +38,16 @@ def do_insert_abstracts
                 thePIPub.is_valid = true
                 thePIPub.save!
                 rs.valid_paper(investigator.username, new_paper)
+              else
+                rs.reviewed_paper(investigator.username)
               end
             elsif (!investigator.mark_pubs_as_valid) and thePIPub.is_valid 
               if (thePIPub.last_reviewed_id.blank? or thePIPub.last_reviewed_id < 1) and (thePIPub.last_reviewed_ip.blank? or thePIPub.last_reviewed_ip =~ /abstract|migration/i ) then
                 thePIPub.is_valid = false
                 thePIPub.save!
                 rs.invalid_paper(investigator.username, new_paper)
+              else
+                rs.reviewed_paper(investigator.username)
               end
             end
             if thePIPub.is_valid and abstract.is_valid == false and (abstract.last_reviewed_id.blank? or abstract.last_reviewed_id < 1) and (abstract.last_reviewed_ip.blank? or abstract.last_reviewed_ip =~ /abstract|migration/i ) then

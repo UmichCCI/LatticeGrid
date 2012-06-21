@@ -30,7 +30,7 @@ class ReportState
 			case k
 			when :new_inv, :del_inv, :pubmed_inv, :pubmed_limit_inv
 				h[k] = Array.new
-			when :new_papers, :new_valid_papers, :old_valid_papers, :new_invalid_papers, :old_invalid_papers
+			when :new_papers, :reviewed_papers, :new_valid_papers, :old_valid_papers, :new_invalid_papers, :old_invalid_papers
 				h[k] = Hash.new do |h2, k2|
 					h2[k2] = 0  # I think I might just be able to use the shorthand, but whatever.
 				end
@@ -118,6 +118,10 @@ class ReportState
 		else
 			@content[:old_invalid_papers][inv] += 1
 		end
+	end
+
+	def reviewed_paper(inv)
+		@content[:reviewed_papers][inv] += 1
 	end
 
 	def few_papers(inv, count)
