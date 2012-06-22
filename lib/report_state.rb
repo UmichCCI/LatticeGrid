@@ -131,7 +131,7 @@ class ReportState
 
 	def few_papers(inv, count)
 		if count == 0
-			@content[:warnings][inv] = "Didn't find any papers."
+			@content[:warnings][inv] = "Didn't find any valid papers."
 		else
 			@content[:warnings][inv] = "Found #{count} paper(s), which seems like too few.  Inserted anyway."
 		end

@@ -3,9 +3,9 @@ LatticeGrid updated investigators and pulled 10 years of abstracts on <%= @date 
 <% if !@finalized -%>
 ERROR: LatticeGrid didn't finish the process.  Check the log files for errors.  <% if @ruby_exception -%>
 One exception was captured: <%= @ruby_exception.inspect %>
-<% end -%>
 <% else -%>
 No exception was captured.
+<% end -%>
 <% end -%>
 <% @warnings ||= {}
 @new_valid_papers ||= Hash.new([])  # {|h, k| h[k] = [] }
@@ -30,6 +30,7 @@ unknown name
 WARNING: <%= @warnings[inv] %>
 <% end -%>
 Inserted <%= pluralize(@new_papers[inv].length, 'new paper') %>: <%= @new_valid_papers[inv].length %> valid, <%= @new_invalid_papers[inv].length %> invalid.
+<%- @new_papers.delete inv -%>
 <% end -%>
 <% else -%>
 Imported no new investigators.
