@@ -25,7 +25,7 @@ New Investigators:
 <%= @usernames[inv] -%>
 <% else -%>
 unknown name
-<%- end -%>)
+<%- end -%>) in <%= @new_aff[inv].join(", ") %>
 <% if @warnings[inv] -%>
 WARNING: <%= @warnings[inv] %>
 <% end -%>
@@ -34,6 +34,26 @@ Inserted <%= pluralize(@new_papers[inv].length, 'new paper') %>: <%= @new_valid_
 <% end -%>
 <% else -%>
 Imported no new investigators.
+<% end -%>
+
+<%- new_aff_names = @new_aff.keys - @new_inv -%>
+<% if @new_aff.length > 0 -%>
+Added investigator affiliations:
+<% new_aff_names.each do |inv| -%>
+<%- aff = @new_aff[inv] -%>
+- <%= inv %>: <%= aff.join(", ") %>
+<% end -%>
+<% else -%>
+Added no affiliations.
+<% end -%>
+
+<% if @del_aff -%>
+Removed investigators affiliations:
+<% @del_aff.each_pair do |inv, aff| -%>
+- <%= inv %>: <%= aff.to_sentence %>
+<% end -%>
+<% else -%>
+Removed no affiliations.
 <% end -%>
 
 <% if @del_inv -%>
