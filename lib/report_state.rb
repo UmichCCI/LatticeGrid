@@ -1,6 +1,7 @@
 require 'yaml'
 require 'singleton'
 require 'date'
+require 'set'
 
 class ReportState
 	include Singleton
@@ -32,7 +33,7 @@ class ReportState
 				h[k] = Array.new
 			when :new_papers, :reviewed_papers, :new_valid_papers, :old_valid_papers, :new_invalid_papers, :old_invalid_papers
 				h[k] = Hash.new do |h2, k2|
-					h2[k2] = 0  # I think I might just be able to use the shorthand, but whatever.
+					h2[k2] = Set.new
 				end
 			when :new_aff, :del_aff
 				h[k] = Hash.new do |h2, k2|
@@ -100,28 +101,32 @@ class ReportState
 		}
 	end
 
-	def new_paper(inv)
-		@content[:new_papers][inv] += 1
+	def new_paper(inv, a_id)
+		@content[:new_papers][inv].add a_id
 	end
 
-	def valid_paper(inv, new_paper)
+	def valid_paper(inv, a_id, new_paper)
 		if new_paper
-			@content[:new_valid_papers][inv] += 1
+			@content[:new_valid_papers][inv].add a_id
+			@content[:new_invalid_papers][inv].delete a_id
 		else
-			@content[:old_valid_papers][inv] += 1
+			@content[:old_valid_papers][inv].add a_id
+			@content[:old_invalid_papers][inv].delete a_id
 		end
 	end
 
-	def invalid_paper(inv, new_paper)
+	def invalid_paper(inv, a_id, new_paper)
 		if new_paper
-			@content[:new_invalid_papers][inv] += 1
+			@content[:new_invalid_papers][inv].add a_id
+			@content[:new_valid_papers][inv].delete a_id
 		else
-			@content[:old_invalid_papers][inv] += 1
+			@content[:old_invalid_papers][inv].add a_id
+			@content[:old_valid_papers][inv].delete a_id
 		end
 	end
 
-	def reviewed_paper(inv)
-		@content[:reviewed_papers][inv] += 1
+	def reviewed_paper(inv, a_id)
+		@content[:reviewed_papers][inv].add a_id
 	end
 
 	def few_papers(inv, count)

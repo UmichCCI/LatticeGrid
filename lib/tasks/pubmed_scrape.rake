@@ -29,7 +29,8 @@ def do_insert_abstracts
 
             new_paper = false
             if thePIPub.created_at.to_date == Date.today
-              rs.new_paper(investigator.username)
+              # Abstract IDs are more useful than PI_Pub IDs.
+              rs.new_paper(investigator.username, abstract.id)
               new_paper = true
             end
             # check to see if we should set as valid if it has not been reviewed!
@@ -37,19 +38,22 @@ def do_insert_abstracts
               if (thePIPub.last_reviewed_at.blank? || thePIPub.last_reviewed_id == 0) and (thePIPub.last_reviewed_ip.blank? or thePIPub.last_reviewed_ip =~ /abstract|migration/i ) then
                 thePIPub.is_valid = true
                 thePIPub.save!
-                rs.valid_paper(investigator.username, new_paper)
-              else
-                rs.reviewed_paper(investigator.username)
               end
             elsif (!investigator.mark_pubs_as_valid) and thePIPub.is_valid 
               if (thePIPub.last_reviewed_id.blank? or thePIPub.last_reviewed_id < 1) and (thePIPub.last_reviewed_ip.blank? or thePIPub.last_reviewed_ip =~ /abstract|migration/i ) then
                 thePIPub.is_valid = false
                 thePIPub.save!
-                rs.invalid_paper(investigator.username, new_paper)
-              else
-                rs.reviewed_paper(investigator.username)
               end
             end
+
+            if !(thePIPub.last_reviewed_id.blank? or thePIPub.last_reviewed_id < 1) or !(thePIPub.last_reviewed_ip.blank? or thePIPub.last_reviewed_ip =~ /abstract|migration/i )
+              rs.reviewed_paper(investigator.username, abstract.id)
+            elsif thePIPub.is_valid
+              rs.valid_paper(investigator.username, abstract.id, new_paper)
+            else
+              rs.invalid_paper(investigator.username, abstract.id, new_paper)
+            end
+
             if thePIPub.is_valid and abstract.is_valid == false and (abstract.last_reviewed_id.blank? or abstract.last_reviewed_id < 1) and (abstract.last_reviewed_ip.blank? or abstract.last_reviewed_ip =~ /abstract|migration/i ) then
               abstract.is_valid    = true
               abstract.last_reviewed_id    = 0

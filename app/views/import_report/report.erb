@@ -1,0 +1,74 @@
+LatticeGrid updated investigators and pulled 10 years of abstracts on <%= @date %>.
+
+<% if !@finalized -%>
+ERROR: LatticeGrid didn't finish the process.  Check the log files for errors.  <% if @ruby_exception -%>
+One exception was captured: <%= @ruby_exception.inspect %>
+<% end -%>
+<% else -%>
+No exception was captured.
+<% end -%>
+<% @warnings ||= {}
+@new_valid_papers ||= Hash.new([])  # {|h, k| h[k] = [] }
+@new_invalid_papers ||= Hash.new([])  # {|h, k| h[k] = [] }
+@new_papers ||= Hash.new([])
+-%>
+<!-- 
+<% if @warnings -%>
+<% @warnings.each_pair do |k, v| -%>
+WARNING: For investigator <%= k %>: <%= v %>
+<% end -%>
+<% end -%> -->
+<% if @new_inv -%>
+New Investigators:
+<% @new_inv.each do |inv| -%>
+- <%= inv %> (<% if @usernames[inv] -%>
+<%= @usernames[inv] -%>
+<% else -%>
+unknown name
+<%- end -%>)
+<% if @warnings[inv] -%>
+WARNING: <%= @warnings[inv] %>
+<% end -%>
+Inserted <%= pluralize(@new_papers[inv].length, 'new paper') %>: <%= @new_valid_papers[inv].length %> valid, <%= @new_invalid_papers[inv].length %> invalid.
+<% end -%>
+<% else -%>
+Imported no new investigators.
+<% end -%>
+
+<% if @del_inv -%>
+Removed Investigators:
+<% @del_inv.each do |inv| -%>
+- <%= inv %>
+<% end -%>
+<% else -%>
+Removed no investigators.
+<% end -%>
+
+<% if @pubmed_inv -%>
+Changed PubMed strings for investigators:
+<% @pubmed_inv.each do |h| -%>
+- <%= h[:inv] %>: Changed from <%= h[:old_str].inspect %> to <%= h[:new_str].inspect %>.
+<% end -%>
+<% else -%>
+No pubmed search strings changed.
+<% end -%>
+
+<% if @pubmed_limit_inv -%>
+Changed PubMed strings for investigators:
+<% @pubmed_limit_inv.each do |h| -%>
+- <%= h[:inv] %>: Changed from <%= h[:old_val].inspect %> to <%= h[:new_val].inspect %>.
+<% end -%>
+<% else -%>
+No pubmed institutional limits changed.
+<% end -%>
+
+<% if @new_papers -%>
+New papers for old investigators since the last PubMed update (probably yesterday's daily build):
+<% @new_papers.each do |k, v| -%>
+- <%= k %>: <%= pluralize(v.length, "new paper") %>, <%= @new_valid_papers[k].length || 0 %> valid, <%= @new_invalid_papers[k].length || 0 %> invalid.
+<% end -%>
+<% else -%>
+Found no new papers.
+<% end -%>
+
+Done.
