@@ -11,6 +11,8 @@ No exception was captured.
 @new_valid_papers ||= Hash.new([])  # {|h, k| h[k] = [] }
 @new_invalid_papers ||= Hash.new([])  # {|h, k| h[k] = [] }
 @new_papers ||= Hash.new([])
+@new_aff ||= Hash.new([])
+@new_inv ||= []
 -%>
 <!-- 
 <% if @warnings -%>
@@ -18,7 +20,7 @@ No exception was captured.
 WARNING: For investigator <%= k %>: <%= v %>
 <% end -%>
 <% end -%> -->
-<% if @new_inv -%>
+<% if @new_inv.length > 0 -%>
 New Investigators:
 <% @new_inv.each do |inv| -%>
 - <%= inv %> (<% if @usernames[inv] -%>
@@ -83,7 +85,7 @@ Changed PubMed strings for investigators:
 No pubmed institutional limits changed.
 <% end -%>
 
-<% if @new_papers -%>
+<% if @new_papers.length > 0 -%>
 New papers for old investigators since the last PubMed update (probably yesterday's daily build):
 <% @new_papers.each do |k, v| -%>
 - <%= k %>: <%= pluralize(v.length, "new paper") %>, <%= @new_valid_papers[k].length || 0 %> valid, <%= @new_invalid_papers[k].length || 0 %> invalid.
