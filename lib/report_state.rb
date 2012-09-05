@@ -8,6 +8,48 @@ class ReportState
 	# This maintains the YAML state file across scraping.
 	# Eventually, it's serialized into a hash for processing by the actionmailer.
 
+	class Content < Hash
+		def initialize
+			super() do |h, k|
+				case k
+				when :new_inv, :del_inv, :pubmed_inv, :pubmed_limit_inv
+					h[k] = Array.new
+				when :new_papers, :reviewed_papers, :new_valid_papers, :old_valid_papers, :new_invalid_papers, :old_invalid_papers
+					h[k] = Hash.new do |h2, k2|
+						h2[k2] = Set.new
+					end
+				when :new_aff, :del_aff
+					h[k] = Hash.new do |h2, k2|
+						h2[k2] = []
+					end
+				when :usernames, :warnings
+					h[k] = {}
+				when :ruby_exception, :exception_backtrace
+					h[k] = nil
+				when :finalized
+					h[k] = false
+				else
+					raise "Unrecognized key: #{k.inspect}."
+				end
+			end
+		end
+
+		def read_state!(rs)
+			rs.each_pair do |k, v|
+				if v.is_a? Hash
+					# Special processing to allow for the nested special hashes.
+					# May need to change this if the hash depth increases.
+					v.each_pair do |k2, v2|
+						self[k][k2] = v2
+					end
+				else
+					self[k] = v
+				end
+			end
+			self
+		end
+	end
+
 	STATE_ROOT = 'db/imports/UMich/'
 
 	class << self
@@ -27,41 +69,9 @@ class ReportState
 	end
 
 	def initialize
-		@content = Hash.new do |h, k|
-			case k
-			when :new_inv, :del_inv, :pubmed_inv, :pubmed_limit_inv
-				h[k] = Array.new
-			when :new_papers, :reviewed_papers, :new_valid_papers, :old_valid_papers, :new_invalid_papers, :old_invalid_papers
-				h[k] = Hash.new do |h2, k2|
-					h2[k2] = Set.new
-				end
-			when :new_aff, :del_aff
-				h[k] = Hash.new do |h2, k2|
-					h2[k2] = []
-				end
-			when :usernames, :warnings
-				h[k] = {}
-			when :ruby_exception, :exception_backtrace
-				h[k] = nil
-			when :finalized
-				h[k] = false
-			else
-				raise "Unrecognized key: #{k.inspect}."
-			end
-		end
-
+		@content = Content.new
 		if File.exists? state_file
-			YAML.load_file(state_file).each_pair do |k, v|
-				if v.is_a? Hash
-					# Special processing to allow for the nested special hashes.
-					# May need to change this if the hash depth increases.
-					v.each_pair do |k2, v2|
-						@content[k][k2] = v2
-					end
-				else
-					@content[k] = v
-				end
-			end
+			@content.read_state! YAML.load_file(state_file)
 		end
 	end
 
