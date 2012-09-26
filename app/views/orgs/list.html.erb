@@ -1,5 +1,9 @@
 <h1><%= @heading %></h1>
 
+<%= affiliation_filter_string(@faculty_affiliation_types) %>
+
+<%= render :partial => 'shared/high_impact_journals.html' %>
+
 <p>The following publications are sorted by year and author. Click on the investigator listed to the right of the reference to find other publications by that investigator. Click on the title for a publication to see the abstract. </p>
 
 <div id="listing">
@@ -15,7 +19,7 @@
 	
 	<%= "<div id='list_#{unit.id}'></div>" %>
 	<script type="text/javascript" language="javascript">
-	<%= remote_function(:url => {:controller => :orgs, :action => :list_abstracts_during_period_rjs, :id => unit.id, :start_date => @start_date, :end_date => @end_date, :affiliation_types => params[:affiliation_types], :exclude_letters => params[:exclude_letters] }, :before => "Element.show('spinner')", 
+	<%= remote_function(:url => {:controller => :orgs, :action => :list_abstracts_during_period_rjs, :id => unit.id, :start_date => @start_date, :end_date => @end_date, :affiliation_types => params[:affiliation_types], :exclude_letters => params[:exclude_letters], :limit_high_impact => params[:limit_high_impact] }, :before => "Element.show('spinner')", 
 	:complete => "Element.hide('spinner')" ) %> 
 	</script>
   <% end %>

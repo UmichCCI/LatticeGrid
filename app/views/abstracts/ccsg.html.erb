@@ -65,8 +65,8 @@
 				<p>Limit faculty with those with the checked appointment types (none selected is the same as all):</p>
 				<%= affiliation_types_list('list_by_unit') %>
 	   <p><%= check_box_tag 'exclude_letters', '1' -%> Exclude Reviews, Editorials, Letters, and Biographies</p>
+	   <p><%= check_box_tag 'limit_high_impact', '1' -%> Limit to High Impact publications</p>
 		  <%= submit_tag 'List Publications' %>
-		
 		<% end %> 
 		<br/>
 	</div>

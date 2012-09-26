@@ -378,17 +378,32 @@ class OrgsController < ApplicationController
     @heading = @heading + " for #{@year} " if params[:start_date].blank?
     @heading = @heading + " from #{@start_date} " if !params[:start_date].blank?
     @heading = @heading + " to #{@end_date}" if !params[:end_date].blank?
+
+    @faculty_affiliation_types = params[:affiliation_types]
+    @limit_to_highimpact = params[:limit_high_impact]
+
+    if @limit_to_highimpact
+      @high_impact_journals = Journal.all(:conditions => {:include_as_high_impact => true}, :order => 'journal_abbreviation ASC')
+    end
+
+    @javascripts_add = ['jquery.min']
+
     render :layout => 'printable'
   end
 
   def list_abstracts_during_period_rjs
     handle_start_and_end_date
+    @limit_to_highimpact = !params[:limit_high_impact].blank?
     @unit = OrganizationalUnit.find(params[:id])
     @faculty = @unit.get_faculty_by_types(params[:affiliation_types])
     @exclude_letters = ! params[:exclude_letters].blank?
-    @faculty_affiliation_types = params[:affiliation_types]
-    faculty_ids = @faculty.map(&:id)
-    @abstracts = Abstract.all_ccsg_publications_by_date(faculty_ids, params[:start_date], params[:end_date], @exclude_letters )
+    unit_pis = @faculty.map(&:id)
+
+    if @limit_to_highimpact
+      @abstracts = Abstract.highimpact_ccsg_publications_by_date(unit_pis, params[:start_date], params[:end_date], @exclude_letters)
+    else
+      @abstracts = Abstract.all_ccsg_publications_by_date(unit_pis, params[:start_date], params[:end_date], @exclude_letters)
+    end
   end
 
   def abstracts_during_period
