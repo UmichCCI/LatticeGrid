@@ -111,7 +111,12 @@ The following is a list of the total publications, number of publications with i
 			<%= the_pubs.length %>
 		</td>
 		<td class="list-title-left">
-			<%= ((unit.publications.length * 10 / unit.get_ccsg_members_for_column(:total, @faculty_affiliation_types).length).to_f / 10) %>
+			<% the_members = unit.get_ccsg_members_for_column(:total, @faculty_affiliation_types).length; %>
+			<% if the_members > 0 %>
+			<%= ((unit.publications.length * 10 / the_members).to_f / 10) %>
+			<% else %>
+			0
+			<% end %>
 		</td>
 		<td class="list-title-left">
 			<%= (unit.pi_intra_abstracts.length) %> (<%= unit.publications.length > 0 ? (100*(unit.pi_intra_abstracts.length)/unit.publications.length) : 0 %>%)<br/>
