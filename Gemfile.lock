@@ -68,7 +68,6 @@ DEPENDENCIES
   bundler
   fastercsv
   haml
-  json (= 1.6.6)
   net-ldap
   pg
   princely (~> 1.2.5)
