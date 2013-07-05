@@ -202,10 +202,10 @@ task :monthlyBuild => [ :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTer
   puts "task monthlyBuild completed. Includes the tasks :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh" if LatticeGridHelper.verbose?
 end
 
-task :monthlyBuild1 => [ :tagAbstractsWithMeshTerms ] do
-  puts "task monthlyBuild1 completed. Includes the tasks :tagAbstractsWithMeshTerms" if LatticeGridHelper.verbose?
+task :monthlyBuild1 => [ :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent ] do
+  puts "task monthlyBuild1 completed. Includes the tasks :tagAbstractsWithMeshTerms, :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords" if LatticeGridHelper.verbose?
 end
 
-task :monthlyBuild2 => [:tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh] do
-  puts "task monthlyBuild2 completed. Includes the tasks :tagInvestigatorsWithMeshTerms, :tagInvestigatorsWithKeywords, :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh" if LatticeGridHelper.verbose?
+task :monthlyBuild2 => [:buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh] do
+  puts "task monthlyBuild2 completed. Includes the tasks :attachMeshInformationContent, :buildInvestigatorColleaguesMesh, :normalizeInvestigatorColleaguesMesh" if LatticeGridHelper.verbose?
 end
